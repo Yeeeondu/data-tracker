@@ -1,0 +1,96 @@
+# 관심기업 데이터 트래커 설정
+# 이 파일만 고치면 키워드·주기 외 대부분을 바꿀 수 있습니다.
+
+briacell:
+  # 브리아셀 IR 뉴스 위젯 (investors.briacell.com/news-events 가 실제로 불러오는 피드)
+  feed_url: "https://feeds.issuerdirect.com/news.html?symbol=BCTX&per_page=50&news_template=plain"
+  # 백업: 구글 뉴스 RSS
+  google_news_query: "BriaCell"
+  # 탑라인 발표로 볼 제목 패턴 (대소문자 무시)
+  topline_patterns:
+    - "topline"
+    - "top-line"
+    - "interim (analysis|data|results)"
+    - "primary endpoint"
+    - "overall survival"
+    - "phase 3 .*\\b(results|met|meets|achieved|achieves|statistically)\\b"
+  # 위 패턴에 걸려도, 아래 단어가 있으면 '예고' 기사로 보고 일반 알림으로만 보냄
+  preview_patterns:
+    - "on track"
+    - "expected"
+    - "anticipat"
+    - "enrollment"
+    - "enrolment"
+  # 탑라인은 아니지만 3상 관련이라 알림으로 받을 제목 패턴 (그 외 보도자료는 보내지 않음)
+  phase3_patterns:
+    - "phase 3"
+    - "phase iii"
+    - "pivotal"
+    - "bria-abc"
+    - "dsmb"
+    - "data safety monitoring"
+
+aurora:
+  name: "오로라월드 (Aurora World Inc) 미국 수입 B/L 건수"
+  data_url: "https://www.importinfo.com/aurora-world-inc?monthly_chart"
+  page_url: "https://www.importinfo.com/aurora-world-inc"
+
+macro:
+  - key: ism_pmi
+    name: "미국 ISM 제조업 PMI"
+    url: "https://ko.tradingeconomics.com/united-states/business-confidence"
+  - key: jp_machine_tool
+    name: "일본 공작기계 수주"
+    url: "https://ko.tradingeconomics.com/japan/machine-tool-orders"
+
+trends:
+  # 기간 기본값: today 5-y(5년). 그룹별로 timeframe 을 따로 줄 수 있음
+  #   today 12-m(1년), today 3-m(3개월), today 5-y(5년)
+  # 키워드는 '검색어'(그냥 글자) 또는 '주제'({label: 표시 이름, id: 구글 주제 ID}) 로 넣을 수 있음
+  timeframe: "today 5-y"
+  hl: "ko"
+  groups:
+    - title: "일본 · toptoon vs ベルトゥーン"
+      geo: "JP"
+      keywords: ["toptoon", "ベルトゥーン"]
+    - title: "미국 · P1Harmony vs aespa"
+      geo: "US"
+      keywords: ["P1Harmony", "aespa"]
+    - title: "미국 · 메디큐브·불닭·이니스프리·코스알엑스·조선미녀"
+      geo: "US"
+      keywords:
+        - {label: "MEDICUBE (주제)", id: "/g/11ql5hxwx3"}
+        - "buldak"
+        - {label: "Innisfree (주제)", id: "/g/11c4bfzxly"}
+        - {label: "COSRX (회사)", id: "/g/11h1md837v"}
+        - {label: "Beauty of Joseon (주제)", id: "/g/11rqgp6dlj"}
+    - title: "미국 · fation·zeroid·마데카크림·마녀공장·아토팜"
+      geo: "US"
+      keywords: ["fation", "zeroid", "madeca cream", "manyo", "atopalm"]
+    - title: "미국 · 리들샷·마데카크림·미샤·네오젠·달바"
+      geo: "US"
+      keywords: ["reedle shot", "madeca cream", "missha", "neogen", "dalba"]
+    - title: "미국 · 블랙핑크·캣츠아이·방탄소년단·스트레이키즈·코르티스"
+      geo: "US"
+      keywords:
+        - {label: "BLACKPINK (걸 그룹)", id: "/g/11byzf3gtr"}
+        - {label: "캣츠아이 (음악 그룹)", id: "/g/11vj6xh7_6"}
+        - {label: "방탄소년단 (보이 그룹)", id: "/m/0w68qx3"}
+        - {label: "스트레이 키즈 (보이 그룹)", id: "/g/11f3f_dy9l"}
+        - {label: "CORTIS (보이 그룹)", id: "/g/11yhhh4qwj"}
+    - title: "미국 · 신라면 툼바"
+      geo: "US"
+      timeframe: "today 12-m"
+      keywords: ["shin ramen toomba", "shin toomba", "toomba ramen"]
+    - title: "전세계 · 티니핑 vs 쿠키런"
+      geo: ""
+      keywords:
+        - "Teenieping"
+        - {label: "캐치! 티니핑 시리즈 (애니메이션)", id: "/g/11hf7xx2qh"}
+        - "쿠키런"
+    - title: "jellycat · 미국 vs 영국"
+      geo: ["US", "GB"]
+      keywords: ["jellycat", "jellycat"]
+    - title: "palm pals · 미국 vs 영국"
+      geo: ["US", "GB"]
+      keywords: ["palm pals", "palm pals"]
