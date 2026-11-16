@@ -40,13 +40,30 @@ def capture_group(page, url, path, tries=3):
         if "oops" in body or "429" in body or "문제가 발생" in body:
             time.sleep(20 * (attempt + 1))
             continue
-        for s in CHART_SELECTORS:
-            loc = page.locator(s)
-            if loc.count():
-                loc.first.scroll_into_view_if_needed()
-                page.wait_for_timeout(1500)
-                loc.first.screenshot(path=str(path))
-                return True
+        # 쿠키 안내 바는 숨기고, '검색어 이름 칸(범례)'부터 '그래프'까지 한 장으로 캡처
+        page.add_style_tag(content="#cookieBar, .cookieBar, .cookieBarInner {display:none !important}")
+        page.wait_for_timeout(1000)
+        box = page.evaluate("""(sels) => {
+            const rect = el => { const r = el.getBoundingClientRect();
+                return {x: r.x + scrollX, y: r.y + scrollY, w: r.width, h: r.height}; };
+            let chart = null;
+            for (const s of sels) { const el = document.querySelector(s);
+                if (el && el.getBoundingClientRect().height > 100) { chart = rect(el); break; } }
+            if (!chart) return null;
+            const head = document.querySelector('explore-pills, .compare-terms');
+            if (!head) return chart;
+            const h = rect(head);
+            const top = Math.min(h.y, chart.y), left = Math.min(h.x, chart.x);
+            const bottom = Math.max(h.y + h.h, chart.y + chart.h);
+            const right = Math.max(h.x + h.w, chart.x + chart.w);
+            return {x: left, y: top, w: right - left, h: bottom - top, withLegend: true};
+        }""", CHART_SELECTORS)
+        if box:
+            pad = 8
+            page.screenshot(path=str(path), full_page=True, clip={
+                "x": max(0, box["x"] - pad), "y": max(0, box["y"] - pad),
+                "width": box["w"] + pad * 2, "height": box["h"] + pad * 2})
+            return True
         time.sleep(10)
     return False
 
@@ -94,3 +111,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
