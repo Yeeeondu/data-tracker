@@ -4,6 +4,7 @@
 소스 2: 구글 뉴스 RSS — 위젯이 막히거나 늦을 때 백업
 """
 import datetime as dt
+import email.utils
 import re
 import sys
 import urllib.parse
@@ -16,6 +17,29 @@ from common import (UA, browser_page, html_escape, load_config, load_state,
                     notify_error_once, save_state, send_message, sha)
 
 IR_PAGE = "https://investors.briacell.com/news-events"
+FRESH_HOURS = 72  # 발표된 지 이 시간 이내인 소식만 알림 (예전 기사 재등장 방지)
+
+
+def parse_date(s):
+    """IR 위젯 '11/6/26 23:00' 또는 RSS 'Mon, 14 Sep 2026 07:00:00 GMT' → UTC datetime. 실패하면 None."""
+    s = (s or "").strip()
+    for fmt in ("%m/%d/%y %H:%M", "%m/%d/%Y %H:%M", "%m/%d/%y"):
+        try:
+            return dt.datetime.strptime(s, fmt).replace(tzinfo=dt.timezone.utc)
+        except ValueError:
+            pass
+    try:
+        d = email.utils.parsedate_to_datetime(s)
+        return d if d.tzinfo else d.replace(tzinfo=dt.timezone.utc)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def norm_key(title):
+    """제목 비교용: 괄호 안 내용·기호·공백을 없애 출처마다 조금 다른 제목도 같은 것으로 봄."""
+    t = re.sub(r"\([^)]*\)", "", title.lower())
+    t = re.sub(r"\(tm\)|™|®", "", t)
+    return sha(re.sub(r"[^a-z0-9]+", "", t))
 
 
 def fetch_ir(feed_url):
@@ -40,7 +64,8 @@ def fetch_ir(feed_url):
 
 def fetch_gnews(query):
     q = urllib.parse.quote(query)
-    r = requests.get(f"https://news.google.com/rss/search?q={q}&hl=en-US&gl=US&ceid=US:en",
+    # when:3d — 최근 3일 기사만 검색
+    r = requests.get(f"https://news.google.com/rss/search?q={q}%20when%3A3d&hl=en-US&gl=US&ceid=US:en",
                      headers={"User-Agent": UA}, timeout=30)
     r.raise_for_status()
     root = ET.fromstring(r.content)
@@ -78,23 +103,30 @@ def main():
         notify_error_once("브리아셀", " / ".join(errors))
         sys.exit(1)
 
+    now = dt.datetime.now(dt.timezone.utc)
     for it in items:
-        # 출처 구분 없이 제목 기준으로 중복 제거 (구글 뉴스는 ' - 매체명' 꼬리 제거)
+        # 구글 뉴스는 ' - 매체명' 꼬리 제거
         norm = re.sub(r"\s+-\s+[^-]+$", "", it["title"]) if it["src"] == "Google News" else it["title"]
-        key = sha(norm.lower().strip())
+        key = norm_key(norm)
         if key in seen:
             continue
         seen.add(key)
         if first_run:
             continue
+        # 날짜를 모르거나 발표된 지 오래된 소식은 알리지 않음 (기록만 함)
+        when = parse_date(it["date"])
+        if when is None or now - when > dt.timedelta(hours=FRESH_HOURS):
+            print(f"오래된 소식이라 건너뜀: {it['date']} {norm}")
+            continue
         kind = classify(norm, cfg)
+        kst = when.astimezone(dt.timezone(dt.timedelta(hours=9))).strftime("%Y-%m-%d %H:%M (한국)")
         if kind == "topline":
             send_message(
                 "🚨🚨 <b>브리아셀 탑라인 관련 발표 감지</b>\n\n"
-                f"<b>{html_escape(norm)}</b>\n{html_escape(it['date'])} · {it['src']}\n\n"
+                f"<b>{html_escape(norm)}</b>\n{kst} · {it['src']}\n\n"
                 f"{html_escape(it['link'])}\nIR: {IR_PAGE}", preview=True)
         elif kind == "phase3":
-            send_message(f"📰 브리아셀 3상 관련 보도자료\n{html_escape(norm)}\n{html_escape(it['date'])} · {it['src']}\n"
+            send_message(f"📰 브리아셀 3상 관련 보도자료\n{html_escape(norm)}\n{kst} · {it['src']}\n"
                          f"{html_escape(it['link'])}")
 
     if first_run:
