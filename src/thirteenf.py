@@ -1,5 +1,6 @@
 """분기별 13F — 새 보고서가 SEC에 올라오면 보유 종목별 평가액과 직전 분기 대비 주식 수 변화를 전송."""
 import datetime as dt
+import json
 import re
 import os
 import sys
@@ -9,7 +10,7 @@ import xml.etree.ElementTree as ET
 import requests
 
 from common import html_escape, load_config, load_state, notify_error_once, save_state
-from news import send_long
+from news import ask_claude_json, llm_available, send_long
 
 
 def _ua():
@@ -116,11 +117,28 @@ def share_class(name):
     return m.group(1).upper() if m else ""
 
 
-def label(r, dup=()):
+def label(r, dup=(), ind=None):
     n = short_name(r["name"])
     if n in dup and share_class(r["name"]):
         n += f" {share_class(r['name'])}"
-    return n + ({"CALL": " (Call)", "PUT": " (Put)"}.get(r["putcall"], ""))
+    tags = [t for t in ((ind or {}).get(r["cusip"], ""), {"CALL": "Call", "PUT": "Put"}.get(r["putcall"], "")) if t]
+    return n + (f" ({', '.join(tags)})" if tags else "")
+
+
+def industries(rows, cache):
+    """종목별 산업을 짧은 한국어로 (예: 반도체, 클라우드, 우주항공). API 키가 없으면 빈 값.
+    한 번 분류한 종목은 state에 저장해 두고 다시 묻지 않음."""
+    todo = {r["cusip"]: r["name"] for r in rows if r["cusip"] not in cache}
+    if todo and llm_available():
+        prompt = ("다음은 미국 13F에 신고된 종목(CUSIP: 회사명)이다. 각 회사의 주력 산업을 한국어 2~8글자로 짧게 적어라 "
+                  "(예: 반도체, 클라우드, 우주항공, 전자상거래, 보험, 은행, 석유가스, 제약, 전력, ETF). "
+                  '출력: {"CUSIP": "산업", ...}\n' + json.dumps(todo, ensure_ascii=False))
+        try:
+            got = ask_claude_json(prompt, max_tokens=2000)
+            cache.update({k: str(v)[:12] for k, v in got.items() if k in todo})
+        except Exception as e:  # noqa: BLE001
+            print(f"산업 분류 실패: {e}", file=sys.stderr)
+    return cache
 
 
 def quarter(period):
@@ -132,7 +150,7 @@ def pct(x):
     return f"{x:+.0f}%".replace("+0%", "0%").replace("-0%", "0%")
 
 
-def build_message(fund, filing, cur, prev, cfg):
+def build_message(fund, filing, cur, prev, cfg, ind=None):
     """예) - Nvidia Corporation: 평가액 $20.98B, 비중 35.2% (+3.1%p), 주식수 QoQ +6%"""
     n = cfg.get("top_n", 20)
     tot = sum(r["value"] for r in cur.values()) or 1
@@ -152,13 +170,13 @@ def build_message(fund, filing, cur, prev, cfg):
         else:
             wch = f" ({w - p['value'] / ptot * 100:+.1f}%p)".replace("+0.0%p", "0.0%p").replace("-0.0%p", "0.0%p")
             sch = pct((r["shares"] / p["shares"] - 1) * 100) if p["shares"] > 0 else "-"
-        lines.append(f"- {html_escape(label(r, dup))}: 평가액 {money(r['value'])}, 비중 {w:.1f}%{wch}, 주식수 QoQ {sch}")
+        lines.append(f"- {html_escape(label(r, dup, ind))}: 평가액 {money(r['value'])}, 비중 {w:.1f}%{wch}, 주식수 QoQ {sch}")
     if len(top) > n:
         lines.append(f"  (그 외 {len(top) - n}개 종목)")
     if prev:
         gone = sorted((prev[k] for k in prev if k not in cur), key=lambda r: -r["value"])
         for r in gone[:10]:
-            lines.append(f"- {html_escape(label(r, dup))}: 전량 매도 (직전 비중 {r['value'] / ptot * 100:.1f}%)")
+            lines.append(f"- {html_escape(label(r, dup, ind))}: 전량 매도 (직전 비중 {r['value'] / ptot * 100:.1f}%)")
         if len(gone) > 10:
             lines.append(f"  (그 외 전량 매도 {len(gone) - 10}개 종목)")
     acc = filing["acc"]
@@ -196,7 +214,10 @@ def main():
                 older = [x for x in filings if x["period"] < f["period"]]
                 prev_f = older[0] if older else None
                 prev = holdings(fund["cik"], prev_f["acc"]) if prev_f else {}
-                send_long(build_message(fund, f, cur, prev, cfg))
+                shown = sorted(cur.values(), key=lambda r: -r["value"])[:cfg.get("top_n", 20)] + \
+                    sorted((prev[k] for k in prev if k not in cur), key=lambda r: -r["value"])[:10]
+                ind = industries(shown, st.setdefault("industry", {}))
+                send_long(build_message(fund, f, cur, prev, cfg, ind))
             except Exception as e:  # noqa: BLE001
                 errors.append(f"{fund['name']}: {e}")
     st["seen"] = sorted(seen)
