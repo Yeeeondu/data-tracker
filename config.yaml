@@ -94,3 +94,52 @@ trends:
     - title: "palm pals · 미국 vs 영국"
       geo: ["US", "GB"]
       keywords: ["palm pals", "palm pals"]
+
+# ───────── 매일 06:00 인물 의견 브리핑 ─────────
+people:
+  topic_hint: "AI(인공지능) 또는 주식시장·거시경제·투자에 대한 본인의 의견"
+  list:
+    - name: "스탠리 드러켄밀러"
+      queries: [{q: '"Stanley Druckenmiller"', lang: en}, {q: "드러켄밀러", lang: ko}]
+    - name: "빌 애크먼"
+      queries: [{q: '"Bill Ackman"', lang: en}, {q: "빌 애크먼", lang: ko}]
+    - name: "켄 그리핀"
+      queries: [{q: '"Ken Griffin"', lang: en}, {q: "켄 그리핀", lang: ko}]
+    - name: "시트리니 (Citrini Research)"
+      queries: [{q: "Citrini", lang: en}, {q: "시트리니", lang: ko}]
+      feeds: ["https://www.citriniresearch.com/feed"]
+    - name: "하워드 막스"
+      queries: [{q: '"Howard Marks"', lang: en}, {q: "하워드 막스", lang: ko}]
+    - name: "워런 버핏"
+      queries: [{q: '"Warren Buffett"', lang: en}, {q: "워런 버핏", lang: ko}]
+    - name: "켄 피셔"
+      queries: [{q: '"Ken Fisher"', lang: en}, {q: "켄 피셔", lang: ko}]
+    - name: "레오폴드 아셴브레너"
+      queries: [{q: '"Leopold Aschenbrenner"', lang: en}, {q: "Situational Awareness fund", lang: en}, {q: "아셴브레너", lang: ko}]
+    - name: "일론 머스크"
+      queries: [{q: '"Elon Musk" (AI OR stock OR market OR economy)', lang: en}, {q: "일론 머스크 AI", lang: ko}]
+  # API 키가 없을 때 제목만으로 고를 단어
+  fallback_keywords: ["ai", "artificial intelligence", "stock", "market", "nasdaq", "s&p", "bubble", "fed",
+                      "recession", "invest", "portfolio", "bought", "sold", "stake", "nvidia", "인공지능",
+                      "증시", "주식", "시장", "버블", "투자", "매수", "매도", "금리"]
+
+# ───────── 분기별 13F ─────────
+thirteenf:
+  funds:
+    - {name: "드러켄밀러 (듀케인)", cik: 1536411}
+    - {name: "빌 애크먼 (퍼싱스퀘어)", cik: 1336528}
+    - {name: "워런 버핏 (버크셔)", cik: 1067983}
+    - {name: "켄 피셔 (피셔자산운용)", cik: 850529}
+    - {name: "하워드 막스 (오크트리)", cik: 949509}
+    - {name: "레오폴드 아셴브레너 (시추에이셔널 어웨어니스)", cik: 2045724}
+  top_n: 20         # 평가액 상위 몇 개 종목까지 보여줄지
+
+# ───────── 매일 06:00 블로거 관심 기사 ─────────
+blogs:
+  ids: ["dhgusdnd44", "travelingcompanion", "mech05", "ironbed2", "rnjs1016k"]
+  max_articles: 15
+  # 블로거들의 글을 읽고 정리한 관심사와 '앞으로 다룰 주제' 검색어.
+  # (API 키가 있으면 매주 일요일 자동 갱신본이 우선 쓰이고, 없으면 여기 값을 씀)
+  profile:
+    summary: ""
+    queries: []

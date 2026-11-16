@@ -59,9 +59,9 @@ def _tg(method, data=None, files=None):
     r.raise_for_status()
 
 
-def send_message(text, silent=False, preview=False):
+def send_message(text, silent=False, preview=False, limit=4000):
     return _tg("sendMessage", {
-        "text": text[:4000], "parse_mode": "HTML",
+        "text": text[:limit] if limit else text, "parse_mode": "HTML",
         "disable_notification": str(silent).lower(),
         "disable_web_page_preview": str(not preview).lower(),
     })
