@@ -56,7 +56,7 @@ jobs:
           esac
           if [ "$FORCE" = "true" ]; then case "$cmd" in blog_collect.py*) cmd="$cmd --force-send";; *) cmd="$cmd --force";; esac; fi
           echo "cmd=$cmd" >> "$GITHUB_OUTPUT"
-          case "$cmd" in aurora.py*|people.py*|thirteenf.py*|blog_collect.py*|funding.py*) echo "browser=false" >> "$GITHUB_OUTPUT";; *) echo "browser=true" >> "$GITHUB_OUTPUT";; esac
+          case "$cmd" in aurora.py*|people.py*|thirteenf.py*|blog_collect.py*|funding.py*|macro.py*) echo "browser=false" >> "$GITHUB_OUTPUT";; *) echo "browser=true" >> "$GITHUB_OUTPUT";; esac
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -84,3 +84,4 @@ jobs:
           git commit -m "state 업데이트"
           for i in 1 2 3; do git pull --rebase -q && git push -q && exit 0; sleep 5; done
           exit 1
+
