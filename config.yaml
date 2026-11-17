@@ -36,12 +36,26 @@ aurora:
   page_url: "https://www.importinfo.com/aurora-world-inc"
 
 macro:
+  # 공식 발표를 다룬 뉴스에서 수치를 뽑아 MoM·YoY와 함께 보냄 (그래프 없음)
   - key: ism_pmi
     name: "미국 ISM 제조업 PMI"
     url: "https://ko.tradingeconomics.com/united-states/business-confidence"
+    unit_rule: "PMI 지수(예: 55.5). 퍼센트 기호 없이 숫자만"
+    suffix: ""
+    change: point          # 지수라서 증감은 포인트(p)로
+    queries: [['ISM Manufacturing PMI', en], ['"Manufacturing PMI" ISM Report On Business', en]]
+    lookup_queries: [['ISM Manufacturing PMI {month} {year}', en]]
+    seed: {"2025-09": 49.1, "2025-10": 48.7, "2025-11": 48.2, "2025-12": 47.9, "2026-01": 52.6, "2026-02": 52.4,
+           "2026-03": 52.7, "2026-09": 54.5, "2026-10": 55.5}
   - key: jp_machine_tool
     name: "일본 공작기계 수주"
     url: "https://ko.tradingeconomics.com/japan/machine-tool-orders"
+    unit_rule: "총 수주액을 '억 엔' 단위 숫자로 (예: 2,043억 7,700만 엔 → 2043.77, 204,377백만 엔 → 2043.77)"
+    suffix: "억엔"
+    change: pct            # 금액이라서 증감은 %로
+    queries: [['工作機械受注 速報', ja], ['Japan machine tool orders', en], ['일본 공작기계 수주', ko]]
+    lookup_queries: [['工作機械受注 {year}年{m}月', ja], ['Japan machine tool orders {month} {year}', en]]
+    seed: {"2026-09": 2232.09, "2026-10": 2043.77}
 
 trends:
   # 기간 기본값: today 5-y(5년). 그룹별로 timeframe 을 따로 줄 수 있음

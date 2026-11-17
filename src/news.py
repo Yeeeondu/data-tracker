@@ -61,18 +61,20 @@ def fetch_rss(url, timeout=30):
 
 
 def google_news(query, lang="en", hours=26):
-    """구글 뉴스 검색 RSS. 최근 hours 시간 이내 기사만."""
+    """구글 뉴스 검색 RSS. 최근 hours 시간 이내 기사만 (hours=None이면 기간 제한 없이)."""
     if lang == "ko":
         hl, gl, ceid = "ko", "KR", "KR:ko"
+    elif lang == "ja":
+        hl, gl, ceid = "ja", "JP", "JP:ja"
     else:
         hl, gl, ceid = "en-US", "US", "US:en"
-    q = urllib.parse.quote(f"{query} when:{max(1, round(hours / 24))}d")
+    q = urllib.parse.quote(f"{query} when:{max(1, round(hours / 24))}d" if hours else query)
     url = f"https://news.google.com/rss/search?q={q}&hl={hl}&gl={gl}&ceid={ceid}"
     items = fetch_rss(url)
-    cutoff = dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=hours)
+    cutoff = dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=hours) if hours else None
     res = []
     for i in items:
-        if i["date"] and i["date"] < cutoff:
+        if cutoff and i["date"] and i["date"] < cutoff:
             continue
         # 제목 끝의 ' - 매체명' 분리
         m = re.match(r"^(.*)\s+-\s+([^-]+)$", i["title"])

@@ -173,7 +173,30 @@ def shares_fmt(n):
 
 
 def after(chg):
-    return "" if chg is None else f" ｜ {chg:+.1f}%"
+    """｜ 분기 말 이후 고점 상승률, 현재 상승률"""
+    return "" if not chg else f" ｜ {chg[0]:+.1f}%, {chg[1]:+.1f}%"
+
+
+def flow_summary(cur, prev):
+    """분기 중 사고판 금액 (13F엔 거래 가격이 없어 분기 말 주가로 환산).
+    매수 = 신규 종목 평가액 + 늘린 주식 수 × 이번 분기 말 주가
+    매도 = 전량 매도 종목의 직전 평가액 + 줄인 주식 수 × 이번 분기 말 주가"""
+    buy = sell = 0.0
+    for k, r in cur.items():
+        p = prev.get(k)
+        if p is None:
+            buy += r["value"]
+        elif r["shares"] and p["shares"]:
+            px = r["value"] / r["shares"]
+            d = r["shares"] - p["shares"]
+            if d > 0:
+                buy += d * px
+            else:
+                sell += -d * px
+    for k, p in prev.items():
+        if k not in cur:
+            sell += p["value"]
+    return buy, sell
 
 
 def build_message(fund, filing, cur, prev, cfg, ind=None, moves=None):
@@ -218,8 +241,14 @@ def build_message(fund, filing, cur, prev, cfg, ind=None, moves=None):
         return (f"- {nm}: 평가액 {money(r['value'])}({money_delta(dv, r['value'])}{dvp}), "
                 f"비중 {w:.1f}%({w - pw:+.1f}%p){shares}{chg}")
 
-    lines = [f"<b>{html_escape(fund['name'])} — {quarter(filing['period'])} 13F 공시</b>",
-             f"<i>｜ 뒤: 분기 말({filing['period']}) 이후 주가 등락</i>"]
+    lines = [f"<b>{html_escape(fund['name'])} — {quarter(filing['period'])} 13F 공시</b>"]
+    if prev:
+        buy, sell = flow_summary(cur, prev)
+        lines.append(f"총 평가액 {money(tot)}({money_delta(tot - ptot, tot)}, {pct((tot / ptot - 1) * 100)})")
+        lines.append(f"매수 {money(buy)} · 매도 {money(sell)} · 순{'매수' if buy >= sell else '매도'} {money(abs(buy - sell))} "
+                     f"<i>(분기 말 주가로 환산)</i>")
+        lines.append(f"종목 수 {len(cur)}개 (직전 {len(prev)}개)")
+    lines.append(f"<i>｜ 뒤: 분기 말({filing['period']}) 이후 고점 상승률, 현재 상승률</i>")
     for g, items in groups.items():
         if not items:
             continue
