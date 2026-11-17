@@ -1,21 +1,22 @@
 name: 데이터 트래커
 on:
   schedule:
-    - cron: "0 */3 * * *"     # 브리아셀: 3시간마다
-    - cron: "0 23 14-16 * *"  # 오로라: 매월 15~17일 08:00 KST
-    - cron: "30 0 2-5 * *"    # ISM PMI: 매월 2~5일 09:30 KST
-    - cron: "30 7 8-15 * *"   # 일본 공작기계: 매월 8~15일 16:30 KST
-    - cron: "0 0 * * 1"       # 구글 트렌드: 매주 월 09:00 KST
-    - cron: "35 20 * * *"     # 인물 의견 브리핑: 매일 05:35 KST 시작 → 6시 전후 도착
-    - cron: "40 20 * * *"     # 블로거 관심 기사: 매일 05:40 KST 시작 → 6시 전후 도착
-    - cron: "10 22 1-20 2,5,8,11 *"  # 13F: 제출 시즌(2·5·8·11월 1~20일)에만 07:10 KST 확인, 새 보고서가 있을 때만 전송
-    - cron: "0 15 * * 6"      # 블로그 글 수집: 매주 일요일 00:00 KST
+    # GitHub는 정각(:00)에 예약이 몰려 지연·누락이 잦아서 분을 일부러 어긋나게 잡음
+    - cron: "17 */6 * * *"     # 브리아셀: 6시간마다
+    - cron: "23 22 14-16 * *"  # 오로라: 매월 15~17일 07:23 KST
+    - cron: "37 0 2-5 * *"    # ISM PMI: 매월 2~5일 09:37 KST
+    - cron: "43 7 8-15 * *"   # 일본 공작기계: 매월 8~15일 16:43 KST
+    - cron: "7 0 * * 1"       # 구글 트렌드: 매주 월 09:07 KST
+    - cron: "27 20 * * *"     # 인물 발언: 매일 05:27 KST 시작 → 6시 전후 도착
+    - cron: "13 22 1-20 2,5,8,11 *"  # 13F: 제출 시즌(2·5·8·11월 1~20일)에만 07:13 KST 확인, 새 보고서가 있을 때만 전송
+    - cron: "17 12 * * 0"     # 블로그 학습 + 쉰 블로거 대신 기사: 매주 일요일 21:17 KST
+    - cron: "47 12 * * 0"     # 빅테크 자금 조달 요약: 매주 일요일 21:47 KST (있을 때만)
   workflow_dispatch:
     inputs:
       job:
         description: "실행할 항목"
         type: choice
-        options: [브리아셀, 오로라, ISM, 공작기계, 구글트렌드, 인물브리핑, 블로거기사, 13F, 블로그수집]
+        options: [브리아셀, 오로라, ISM, 공작기계, 구글트렌드, 인물브리핑, 13F, 블로그주간, 자금조달, 자금조달기록]
       force:
         description: "이미 보낸 것이어도 지금 다시 보내기"
         type: boolean
@@ -30,7 +31,7 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - name: 무엇을 실행할지 결정
@@ -41,20 +42,21 @@ jobs:
           FORCE: ${{ inputs.force }}
         run: |
           case "$SCHED$JOB" in
-            "0 */3 * * *"|브리아셀)     cmd="briacell.py";;
-            "0 23 14-16 * *"|오로라)    cmd="aurora.py";;
-            "30 0 2-5 * *"|ISM)         cmd="macro.py --only=ism_pmi";;
-            "30 7 8-15 * *"|공작기계)   cmd="macro.py --only=jp_machine_tool";;
-            "0 0 * * 1"|구글트렌드)     cmd="trends.py";;
-            "35 20 * * *"|인물브리핑)   cmd="people.py";;
-            "40 20 * * *"|블로거기사)   cmd="blogs.py";;
-            "10 22 1-20 2,5,8,11 *"|13F) cmd="thirteenf.py";;
-            "0 15 * * 6"|블로그수집)    cmd="blog_collect.py";;
+            "17 */6 * * *"|브리아셀)     cmd="briacell.py";;
+            "23 22 14-16 * *"|오로라)    cmd="aurora.py";;
+            "37 0 2-5 * *"|ISM)         cmd="macro.py --only=ism_pmi";;
+            "43 7 8-15 * *"|공작기계)   cmd="macro.py --only=jp_machine_tool";;
+            "7 0 * * 1"|구글트렌드)     cmd="trends.py";;
+            "27 20 * * *"|인물브리핑)   cmd="people.py";;
+            "13 22 1-20 2,5,8,11 *"|13F) cmd="thirteenf.py";;
+            "17 12 * * 0"|블로그주간)   cmd="blog_collect.py";;
+            "47 12 * * 0"|자금조달)     cmd="funding.py";;
+            자금조달기록)               cmd="funding.py --backfill";;
             *) echo "알 수 없는 실행: $SCHED$JOB"; exit 1;;
           esac
-          if [ "$FORCE" = "true" ]; then cmd="$cmd --force"; fi
+          if [ "$FORCE" = "true" ]; then case "$cmd" in blog_collect.py*) cmd="$cmd --force-send";; *) cmd="$cmd --force";; esac; fi
           echo "cmd=$cmd" >> "$GITHUB_OUTPUT"
-          case "$cmd" in aurora.py*|people.py*|blogs.py*|thirteenf.py*|blog_collect.py*) echo "browser=false" >> "$GITHUB_OUTPUT";; *) echo "browser=true" >> "$GITHUB_OUTPUT";; esac
+          case "$cmd" in aurora.py*|people.py*|thirteenf.py*|blog_collect.py*|funding.py*) echo "browser=false" >> "$GITHUB_OUTPUT";; *) echo "browser=true" >> "$GITHUB_OUTPUT";; esac
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -82,3 +84,4 @@ jobs:
           git commit -m "state 업데이트"
           for i in 1 2 3; do git pull --rebase -q && git push -q && exit 0; sleep 5; done
           exit 1
+
