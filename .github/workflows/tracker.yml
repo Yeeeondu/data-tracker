@@ -73,7 +73,7 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
-        run: python src/${{ steps.pick.outputs.cmd }}
+        run: python -u src/${{ steps.pick.outputs.cmd }}   # -u: 기록이 순서대로 남도록
       - name: 상태 저장
         if: always()
         run: |
@@ -84,4 +84,3 @@ jobs:
           git commit -m "state 업데이트"
           for i in 1 2 3; do git pull --rebase -q && git push -q && exit 0; sleep 5; done
           exit 1
-
