@@ -123,12 +123,21 @@ def same_deal(a, b):
         return False
 
 
+def _expand(d):
+    """묶음 줄(parts)이 있으면 각 발행을 날짜와 함께 따로 꺼냄 (중복 판단용)."""
+    return [d] + [dict(p, date=p.get("date", d.get("date", ""))) for p in d.get("parts") or []]
+
+
+def is_dup(d, deals):
+    return any(same_deal(d, x) for y in deals for x in _expand(y))
+
+
 def ledger_for(name, cfg, st):
     """config의 직접 정리한 기록 + 자동으로 쌓인 기록(state)을 합쳐 최신순으로."""
     seed = list(((cfg.get("ledger") or {}).get(name) or {}).get("deals", []))
     merged = list(seed)
     for d in (st.get(name) or {}).get("deals", []):
-        if not any(same_deal(d, s) for s in seed):
+        if not is_dup(d, seed):
             merged.append(d)
     return sorted(merged, key=lambda d: d.get("date", ""), reverse=True)
 
@@ -196,13 +205,16 @@ STYLE = """문장 예시 (날짜는 YY.MM.DD, 금액은 억 단위 + 통화):
  - "SpaceX 상장으로 862.5억달러 조달."
  - 비상장사: "650억달러 조달, 기업가치 9,650억달러 평가" + 세부 줄 "Altimeter·Dragoneer 주도"
 
-각 발행 JSON: {"date": "YY.MM.DD", "kind": "회사채|전환사채|보통주|우선주|IPO|지분투자|계획|논의",
+각 발행 JSON: {"date": "YY.MM.DD", "kind": "회사채|전환사채|보통주|우선주|IPO|지분투자|계획|논의|메모",
  "cur": "USD|EUR|JPY|GBP|CAD|AUD|CHF 등 통화코드", "amt": 해당 통화 기준 금액(억 단위 숫자, 예: 60억유로 → 60),
  "text": "위 예시 형식 한 줄", "sub": ["필요할 때만 세부 줄"]}
  - kind: 보통주 선도매각·ATM·유상증자 = 보통주, 의무전환우선주 = 우선주, 비상장사 투자 유치 = 지분투자,
    '조달 계획 발표' = 계획, 비상장사의 '조달 논의·추진' 보도 = 논의 (계획·논의는 합계에 안 들어감)
  - 포함: 회사채(외화채 포함), 전환·교환사채, 보통주·우선주 발행, 상장 공모, 비상장사 투자 유치
  - 제외: 은행 대출, 신용한도, 금융리스, 자사주 매입, 회사로 돈이 안 들어오는 구주 매출, 선반등록만 한 경우, 기존 채권 교환
+ - ATM·선도매각 '프로그램 설정'이나 '매각 한도 설정'은 실제 발행이 아니므로 kind=계획. 실제로 판 금액이 공시되면 그 금액만 보통주로.
+ - 가격이 정해지지 않은 예비 투자설명서('추진', preliminary)는 기록하지 말고, 가격이 확정된 최종 조건만 기록.
+ - 자회사의 투자 유치는 본사 조달이 아니므로 kind=메모.
  - 같은 발행을 다룬 공시가 여러 개면 하나로. 숫자는 공시 우선, 뉴스에만 있으면 text 끝에 '(보도 기준)'."""
 
 
@@ -264,7 +276,7 @@ def backfill(cfg, st):
             try:
                 for d in extract_history(c, chunk, existing):
                     d = clean(d)
-                    if d["text"] and not any(same_deal(d, x) for x in ledger_for(c["name"], cfg, st)):
+                    if d["text"] and not is_dup(d, ledger_for(c["name"], cfg, st)):
                         rec["deals"].append(d)
             except Exception as e:  # noqa: BLE001
                 print(f"{c['name']} 추출 실패: {e}", file=sys.stderr)
@@ -305,7 +317,7 @@ def main():
         rec = st.setdefault(c["name"], {"deals": []})
         for d in found:
             d = clean(d)
-            if not d["text"] or any(same_deal(d, x) for x in ledger_for(c["name"], cfg, st)):
+            if not d["text"] or is_dup(d, ledger_for(c["name"], cfg, st)):
                 continue
             d["recorded"] = today.isoformat()
             rec["deals"].append(d)

@@ -11,6 +11,7 @@ import requests
 
 from common import html_escape, load_config, load_state, notify_error_once, save_state
 from news import ask_claude_json, llm_available, send_long
+from prices import change_since, cusip_to_ticker
 
 
 def _ua():
@@ -150,35 +151,83 @@ def pct(x):
     return f"{x:+.0f}%".replace("+0%", "0%").replace("-0%", "0%")
 
 
-def build_message(fund, filing, cur, prev, cfg, ind=None):
-    """예) - Nvidia Corporation: 평가액 $20.98B, 비중 35.2% (+3.1%p), 주식수 QoQ +6%"""
-    n = cfg.get("top_n", 20)
+def money_delta(d, ref):
+    """평가액 증감: 기준 금액 단위(B/M)에 맞춰 +0.23B / -45M"""
+    sign = "+" if d >= 0 else "-"
+    d = abs(d)
+    if ref >= 1e9:
+        return f"{sign}{d / 1e9:.2f}B"
+    if ref >= 1e6 or d >= 1e6:
+        return f"{sign}{d / 1e6:,.0f}M"
+    return f"{sign}{d / 1e3:,.0f}K"
+
+
+def shares_fmt(n):
+    sign = "+" if n >= 0 else "-"
+    n = abs(n)
+    if n >= 1e6:
+        return f"{sign}{n / 1e6:.2f}M"
+    if n >= 1e3:
+        return f"{sign}{n / 1e3:.1f}K"
+    return f"{sign}{n:,.0f}"
+
+
+def after(chg):
+    return "" if chg is None else f" ｜ {chg:+.1f}%"
+
+
+def build_message(fund, filing, cur, prev, cfg, ind=None, moves=None):
+    """주식 수 기준 신규·확대·축소·유지·전량 매도로 나눠서:
+    - Natera (유전자진단): 평가액 $1.31B(+0.23B, +21%), 비중 29.2%(+12.6%p), 주식수 +120K(+11%) ｜ +8.4%
+    ｜ 뒤는 분기 말 이후 지금까지의 주가 상승률."""
+    n = cfg.get("top_n", 15)
+    moves = moves or {}
     tot = sum(r["value"] for r in cur.values()) or 1
     ptot = sum(r["value"] for r in prev.values()) or 1
-    top = sorted(cur.values(), key=lambda r: -r["value"])
     names = [short_name(r["name"]) for r in list(cur.values()) + list(prev.values())]
     dup = {x for x in names if names.count(x) > 1}
-    lines = [f"<b>{html_escape(fund['name'])}, {quarter(filing['period'])} 13F 공시</b>", ""]
-    for r in top[:n]:
-        key = f"{r['cusip']}|{r['putcall']}"
-        w = r["value"] / tot * 100
+    groups = {"신규": [], "확대": [], "축소": [], "유지": [], "전량 매도": []}
+    for key, r in cur.items():
         p = prev.get(key)
         if not prev:
-            wch, sch = "", "-"
+            groups["유지"].append((r, None))
         elif p is None:
-            wch, sch = " (신규)", "신규"
+            groups["신규"].append((r, None))
         else:
-            wch = f" ({w - p['value'] / ptot * 100:+.1f}%p)".replace("+0.0%p", "0.0%p").replace("-0.0%p", "0.0%p")
-            sch = pct((r["shares"] / p["shares"] - 1) * 100) if p["shares"] > 0 else "-"
-        lines.append(f"- {html_escape(label(r, dup, ind))}: 평가액 {money(r['value'])}, 비중 {w:.1f}%{wch}, 주식수 QoQ {sch}")
-    if len(top) > n:
-        lines.append(f"  (그 외 {len(top) - n}개 종목)")
-    if prev:
-        gone = sorted((prev[k] for k in prev if k not in cur), key=lambda r: -r["value"])
-        for r in gone[:10]:
-            lines.append(f"- {html_escape(label(r, dup, ind))}: 전량 매도 (직전 비중 {r['value'] / ptot * 100:.1f}%)")
-        if len(gone) > 10:
-            lines.append(f"  (그 외 전량 매도 {len(gone) - 10}개 종목)")
+            ch = (r["shares"] / p["shares"] - 1) if p["shares"] else 0
+            groups["확대" if ch > 0.005 else "축소" if ch < -0.005 else "유지"].append((r, p))
+    for key, p in prev.items():
+        if key not in cur:
+            groups["전량 매도"].append((None, p))
+
+    def line(r, p):
+        nm = html_escape(label(r or p, dup, ind))
+        chg = after(moves.get((r or p)["cusip"]))
+        if r is None:  # 전량 매도
+            return f"- {nm}: 직전 평가액 {money(p['value'])}, 직전 비중 {p['value'] / ptot * 100:.1f}%{chg}"
+        w = r["value"] / tot * 100
+        if p is None:  # 신규 (또는 비교할 직전 보고서 없음)
+            return f"- {nm}: 평가액 {money(r['value'])}, 비중 {w:.1f}%{chg}"
+        dv = r["value"] - p["value"]
+        dvp = f", {pct(dv / p['value'] * 100)}" if p["value"] else ""
+        pw = p["value"] / ptot * 100
+        ds = r["shares"] - p["shares"]
+        dsp = pct(ds / p["shares"] * 100) if p["shares"] else "-"
+        same = p["shares"] and abs(ds / p["shares"]) <= 0.005  # 유지: 주식수 변화 생략
+        shares = "" if same else f", 주식수 {shares_fmt(ds)}({dsp})"
+        return (f"- {nm}: 평가액 {money(r['value'])}({money_delta(dv, r['value'])}{dvp}), "
+                f"비중 {w:.1f}%({w - pw:+.1f}%p){shares}{chg}")
+
+    lines = [f"<b>{html_escape(fund['name'])} — {quarter(filing['period'])} 13F 공시</b>",
+             f"<i>｜ 뒤: 분기 말({filing['period']}) 이후 주가 등락</i>"]
+    for g, items in groups.items():
+        if not items:
+            continue
+        items.sort(key=lambda x: -((x[0] or x[1])["value"]))
+        lines += ["", f"<u>{g}</u> ({len(items)})"]
+        lines += [line(r, p) for r, p in items[:n]]
+        if len(items) > n:
+            lines.append(f"… 그 외 {len(items) - n}개")
     acc = filing["acc"]
     lines += ["", f'<a href="https://www.sec.gov/Archives/edgar/data/{fund["cik"]}/{acc.replace("-", "")}/{acc}-index.htm">SEC 원문</a>']
     return "\n".join(lines)
@@ -214,10 +263,14 @@ def main():
                 older = [x for x in filings if x["period"] < f["period"]]
                 prev_f = older[0] if older else None
                 prev = holdings(fund["cik"], prev_f["acc"]) if prev_f else {}
-                shown = sorted(cur.values(), key=lambda r: -r["value"])[:cfg.get("top_n", 20)] + \
-                    sorted((prev[k] for k in prev if k not in cur), key=lambda r: -r["value"])[:10]
+                n = cfg.get("top_n", 15)
+                shown = (sorted(cur.values(), key=lambda r: -r["value"])[:n * 4] +
+                         sorted((prev[k] for k in prev if k not in cur), key=lambda r: -r["value"])[:n])
                 ind = industries(shown, st.setdefault("industry", {}))
-                send_long(build_message(fund, f, cur, prev, cfg, ind))
+                tickers = cusip_to_ticker([r["cusip"] for r in shown], st.setdefault("ticker", {}))
+                since = dt.date.fromisoformat(f["period"])
+                moves = {r["cusip"]: change_since(tickers.get(r["cusip"]), since) for r in shown}
+                send_long(build_message(fund, f, cur, prev, cfg, ind, moves))
             except Exception as e:  # noqa: BLE001
                 errors.append(f"{fund['name']}: {e}")
     st["seen"] = sorted(seen)

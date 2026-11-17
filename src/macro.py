@@ -11,7 +11,7 @@ from common import (OUT_DIR, browser_page, html_escape, load_config, load_state,
 
 DESC_SELECTORS = ["#description", ".te-description", "h2"]
 RANGE_LABELS = ["10Y", "10년", "10 Y"]
-CHART_SELECTORS = ["#trading_chart", ".highcharts-container", "#chart", "#tchart",
+CHART_SELECTORS = ["#chart", "#trading_chart", ".highcharts-container", "#tchart",
                    "[id*='chart']", "[class*='chart']"]
 
 
@@ -29,21 +29,35 @@ def find_chart_box(page):
     }""", CHART_SELECTORS)
 
 
+def _find_desc(page):
+    for s in DESC_SELECTORS:
+        el = page.query_selector(s)
+        if el and len((el.inner_text() or "").strip()) > 40:
+            return el.inner_text().strip()
+    meta = page.query_selector('meta[name="description"]')  # 본문이 늦게 뜨면 머리말 요약이라도
+    if meta and len(meta.get_attribute("content") or "") > 40:
+        return meta.get_attribute("content").strip()
+    return ""
+
+
 def capture(url, path):
     with browser_page(locale="ko-KR", width=1366, height=1000) as page:
-        page.goto(url, wait_until="domcontentloaded", timeout=90000)
-        page.wait_for_timeout(6000)
-        title = page.title()
-        if any(w in title.lower() for w in ["verification", "access denied", "captcha", "just a moment"]):
-            raise RuntimeError(f"Trading Economics 접근 차단됨 (title={title!r})")
         desc = ""
-        for s in DESC_SELECTORS:
-            el = page.query_selector(s)
-            if el and len((el.inner_text() or "").strip()) > 40:
-                desc = el.inner_text().strip()
+        for attempt in range(3):  # 접속 확인(보안 검사) 화면이 먼저 뜨는 경우가 있어 기다렸다가 다시 시도
+            page.goto(url, wait_until="domcontentloaded", timeout=90000)
+            try:
+                page.wait_for_selector("#description", timeout=25000)
+            except Exception:  # noqa: BLE001
+                pass
+            page.wait_for_timeout(3000)
+            desc = _find_desc(page)
+            if desc:
                 break
+            print(f"[{attempt + 1}회차] 요약문 없음 — 제목={page.title()!r}, 본문 앞부분={page.inner_text('body')[:300]!r}")
+            page.wait_for_timeout(10000 * (attempt + 1))
         if not desc:
-            raise RuntimeError("요약문을 찾지 못함 (페이지 구조 변경 가능성)")
+            page.screenshot(path=str(path))
+            raise RuntimeError(f"요약문을 찾지 못함 (제목={page.title()!r}) — 자동 접속이 막혔을 가능성")
 
         clicked = False
         for label in RANGE_LABELS:
@@ -86,6 +100,7 @@ def main():
             desc, clicked = capture(ind["url"], path)
         except Exception as e:  # noqa: BLE001
             failed = True
+            print(f"{ind['name']} 실패: {e}", file=sys.stderr)
             notify_error_once(ind["name"], e)
             continue
         h = sha(desc)

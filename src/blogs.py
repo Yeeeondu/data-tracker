@@ -6,6 +6,7 @@
 import collections
 import datetime as dt
 import json
+import re
 import sys
 
 from common import html_escape
@@ -44,12 +45,26 @@ def send_for_silent(silent, ai_prof, cfg_prof, n=15):
                 "예상 주제": (ai_prof or {}).get("next_topics") or (cfg_prof or {}).get("next_topics")}
         lst = [{"id": k, "title": c["title"], "source": c["source"]} for k, c in enumerate(cands[:400])]
         prompt = (f"이번 주 글을 올리지 않은 투자 블로거({', '.join(silent)})의 관심사: {json.dumps(info, ensure_ascii=False)}\n\n"
-                  f"이 블로거들이 계속 글을 썼다면 읽고 참고했을 지난 7일 기사 {n}개를 골라라. "
-                  "새 전개·선행 신호·파생 이슈를 우선하고, 같은 사건은 하나만, 광고·단순 시세 기사는 제외. 중요도 순.\n"
-                  + json.dumps(lst, ensure_ascii=False) + '\n출력: {"ids": [...]}')
+                  f"이 블로거들이 계속 글을 썼다면 읽고 참고했을 지난 7일 기사 {n}개를 골라라.\n"
+                  "선별 기준:\n"
+                  "1) 이들은 AI·반도체·에너지·금리·유가 같은 거시 흐름을 다룬다. 업황 전체를 가늠할 수 있는 기사만 고른다.\n"
+                  "   - 포함 예: 하이퍼스케일러 투자 계획, HBM4·메모리 가격, 소프트뱅크 가스터빈 주문 취소, 탱커 운임 하락, 연준 금리 결정, 유가·OPEC\n"
+                  "   - 제외 예: 'LS일렉트릭 1300억 전력설비 공급'처럼 업황 전체를 보기엔 작은 개별 기업의 수주·실적·제품 기사\n"
+                  "2) 주가·지수 전망 기사는 제외 (예: '코스피 3900까지 떨어질 것', 목표주가, 증시 전망, 애널리스트 매수 추천).\n"
+                  "3) 같은 사건·같은 보고서·같은 인물의 같은 주제는 하나만 (예: SemiAnalysis capex 하향을 다룬 기사 여러 개 → 1개, "
+                  "케빈 워시 관련 기사 여러 개 → 가장 중요한 1개). 각 기사에 topic(사건을 짧게)을 붙여라.\n"
+                  "4) 새 전개·선행 신호·파생 이슈를 우선, 광고·단순 시세 기사는 제외. 중요도 순. 기준에 맞는 게 적으면 15개보다 적어도 된다.\n"
+                  + json.dumps(lst, ensure_ascii=False) + '\n출력: {"picks": [{"id": 번호, "topic": "사건 요약 몇 단어"}]}')
         try:
-            ids = ask_claude_json(prompt, max_tokens=600).get("ids", [])
-            picks = [cands[i] for i in ids if isinstance(i, int) and 0 <= i < len(cands)][:n]
+            res = ask_claude_json(prompt, max_tokens=1200)
+            seen_topics, picks = set(), []
+            for x in res.get("picks", []):
+                i, topic = x.get("id"), re.sub(r"\W+", "", str(x.get("topic", "")).lower())
+                if not isinstance(i, int) or not 0 <= i < len(cands) or (topic and topic in seen_topics):
+                    continue
+                seen_topics.add(topic)
+                picks.append(cands[i])
+            picks = picks[:n]
         except Exception as e:  # noqa: BLE001
             print(f"AI 선별 실패: {e}", file=sys.stderr)
     if not picks:  # 키가 없거나 실패: 검색어마다 최신 기사를 돌아가며

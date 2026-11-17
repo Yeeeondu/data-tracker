@@ -121,10 +121,31 @@ def ask_claude(prompt, system="", max_tokens=3000, model=None):
     r.raise_for_status()
 
 
-def ask_claude_json(prompt, system="", max_tokens=3000):
-    text = ask_claude(prompt + "\n\n반드시 JSON만 출력하세요. 코드블록 표시 없이.", system, max_tokens)
+def _parse_json(text):
     m = re.search(r"[\[{].*[\]}]", text, re.S)
-    return json.loads(m.group(0) if m else text)
+    raw = m.group(0) if m else text
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        # 흔한 형식 실수(끝 쉼표, 줄바꿈 문자) 보정 후 재시도
+        fixed = re.sub(r",\s*([\]}])", r"\1", raw).replace("\n", " ")
+        return json.loads(fixed)
+
+
+def ask_claude_json(prompt, system="", max_tokens=3000):
+    """JSON으로 답받기. 형식이 깨지면 최대 2번 다시 요청."""
+    ask = prompt + "\n\n반드시 올바른 JSON만 출력하세요. 코드블록 표시 없이. 문자열 안의 큰따옴표는 \\\" 로 쓰세요."
+    last = None
+    for attempt in range(3):
+        text = ask_claude(ask, system, max_tokens)
+        try:
+            return _parse_json(text)
+        except json.JSONDecodeError as e:
+            last = e
+            print(f"JSON 형식 오류({attempt + 1}회): {e}", file=sys.stderr)
+            ask = (prompt + "\n\n앞선 답이 JSON 형식 오류였습니다. 이번에는 문법이 올바른 JSON만, 설명 없이 출력하세요. "
+                   "문자열 안에 큰따옴표를 쓰지 말고 작은따옴표나 「」를 쓰세요.")
+    raise last
 
 
 # ---------- 긴 메시지 나눠 보내기 ----------
