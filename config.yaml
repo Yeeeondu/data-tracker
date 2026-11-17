@@ -127,19 +127,19 @@ people:
 thirteenf:
   funds:
     - {name: "드러켄밀러 (듀케인)", cik: 1536411}
-    - {name: "빌 애크먼 (퍼싱스퀘어)", cik: 1336528}
+    - {name: "빌 애크먼 (퍼싱스퀘어)", cik: 2026053}   # 2026년 2분기부터 상장사 Pershing Square Inc. 명의로 제출
     - {name: "워런 버핏 (버크셔)", cik: 1067983}
     - {name: "켄 피셔 (피셔자산운용)", cik: 850529}
     - {name: "하워드 막스 (오크트리)", cik: 949509}
     - {name: "레오폴드 아셴브레너 (시추에이셔널 어웨어니스)", cik: 2045724}
   top_n: 20         # 평가액 상위 몇 개 종목까지 보여줄지
 
-# ───────── 매일 06:00 블로거 관심 기사 ─────────
+# ───────── 매주 일요일 밤: 블로그 학습 + 쉰 블로거 대신 기사 ─────────
 blogs:
   ids: ["dhgusdnd44", "travelingcompanion", "mech05", "ironbed2", "rnjs1016k"]
   max_articles: 15
-  # 블로거들의 글을 읽고 정리한 관심사와 '앞으로 다룰 주제' 검색어.
-  # (API 키가 있으면 매주 일요일 자동 갱신본이 우선 쓰이고, 없으면 여기 값을 씀)
+  # 블로거들의 전체 글을 읽고 정리한 관심사와 블로거별 검색어 (blog: 블로그 ID).
+  # API 키가 있으면 매주 일요일 AI가 갱신한 검색어가 우선 쓰이고, 없으면 여기 값을 씀.
   profile:
     updated: "2026-11-17"
     summary: >-
@@ -159,40 +159,159 @@ blogs:
       - "전력기기·변압기·데이터센터 전력 인프라, 조선 수주와 선가"
     queries:
       # dhgusdnd44 — 데이터·산업 시리즈
-      - {q: "휴머노이드 감속기 액추에이터", lang: ko}
-      - {q: "humanoid robot supply chain", lang: en}
-      - {q: "hyperscaler capex guidance", lang: en}
-      - {q: "hedge fund degrossing", lang: en}
-      - {q: "volatility control funds selling", lang: en}
-      - {q: "엔비디아 크레스 임시 CEO", lang: ko}
-      - {q: "AI productivity statistics", lang: en}
+      - {q: "휴머노이드 감속기 액추에이터", lang: ko, blog: dhgusdnd44}
+      - {q: "humanoid robot supply chain", lang: en, blog: dhgusdnd44}
+      - {q: "hyperscaler capex guidance", lang: en, blog: dhgusdnd44}
+      - {q: "hedge fund degrossing", lang: en, blog: dhgusdnd44}
+      - {q: "volatility control funds selling", lang: en, blog: dhgusdnd44}
+      - {q: "엔비디아 크레스 임시 CEO", lang: ko, blog: dhgusdnd44}
+      - {q: "AI productivity statistics", lang: en, blog: dhgusdnd44}
       # travelingcompanion — 메모리·지배구조·소비재
-      - {q: "DRAM 고정거래가격", lang: ko}
-      - {q: "HBM4 pricing", lang: en}
-      - {q: "의무공개매수 상법 개정", lang: ko}
-      - {q: "주주환원 밸류업 공시", lang: ko}
-      - {q: "K뷰티 미국 오프라인", lang: ko}
-      - {q: "SemiAnalysis", lang: en}
-      - {q: "Stratechery", lang: en}
+      - {q: "DRAM 고정거래가격", lang: ko, blog: travelingcompanion}
+      - {q: "HBM4 pricing", lang: en, blog: travelingcompanion}
+      - {q: "의무공개매수 상법 개정", lang: ko, blog: travelingcompanion}
+      - {q: "주주환원 밸류업 공시", lang: ko, blog: travelingcompanion}
+      - {q: "K뷰티 미국 오프라인", lang: ko, blog: travelingcompanion}
+      - {q: "SemiAnalysis", lang: en, blog: travelingcompanion}
+      - {q: "Stratechery", lang: en, blog: travelingcompanion}
       # mech05 — AI 경제·연산·바이오
-      - {q: "Anthropic IPO", lang: en}
-      - {q: "AI white collar jobs", lang: en}
-      - {q: "GPU rental prices", lang: en}
-      - {q: "AMD Anthropic compute", lang: en}
-      - {q: "oral GLP-1 obesity pill", lang: en}
-      - {q: "AI drug discovery trial", lang: en}
-      - {q: "SpaceX orbital data center", lang: en}
+      - {q: "Anthropic IPO", lang: en, blog: mech05}
+      - {q: "AI white collar jobs", lang: en, blog: mech05}
+      - {q: "GPU rental prices", lang: en, blog: mech05}
+      - {q: "AMD Anthropic compute", lang: en, blog: mech05}
+      - {q: "oral GLP-1 obesity pill", lang: en, blog: mech05}
+      - {q: "AI drug discovery trial", lang: en, blog: mech05}
+      - {q: "SpaceX orbital data center", lang: en, blog: mech05}
       # ironbed2 — 국내 수급·정책·지정학
-      - {q: "코스닥 활성화 정책", lang: ko}
-      - {q: "국민연금 국내주식 비중", lang: ko}
-      - {q: "외국인 순매도 코스피", lang: ko}
-      - {q: "케빈 워시 금리 인상", lang: ko}
-      - {q: "중일 갈등 대만", lang: ko}
+      - {q: "코스닥 활성화 정책", lang: ko, blog: ironbed2}
+      - {q: "국민연금 국내주식 비중", lang: ko, blog: ironbed2}
+      - {q: "외국인 순매도 코스피", lang: ko, blog: ironbed2}
+      - {q: "케빈 워시 금리 인상", lang: ko, blog: ironbed2}
+      - {q: "중일 갈등 대만", lang: ko, blog: ironbed2}
       # rnjs1016k — 에너지·해운·시추·전력
-      - {q: "VLCC rates", lang: en}
-      - {q: "OPEC+ output Iran war", lang: en}
-      - {q: "offshore drilling contract dayrate", lang: en}
-      - {q: "refining margins diesel", lang: en}
-      - {q: "LNG long-term contract", lang: en}
-      - {q: "조선 수주 신조선가", lang: ko}
-      - {q: "변압기 수주 데이터센터 전력", lang: ko}
+      - {q: "VLCC rates", lang: en, blog: rnjs1016k}
+      - {q: "OPEC+ output Iran war", lang: en, blog: rnjs1016k}
+      - {q: "offshore drilling contract dayrate", lang: en, blog: rnjs1016k}
+      - {q: "refining margins diesel", lang: en, blog: rnjs1016k}
+      - {q: "LNG long-term contract", lang: en, blog: rnjs1016k}
+      - {q: "조선 수주 신조선가", lang: ko, blog: rnjs1016k}
+      - {q: "변압기 수주 데이터센터 전력", lang: ko, blog: rnjs1016k}
+
+# ───────── 매주 일요일 밤: 빅테크·AI 기업 자금 조달 ─────────
+# 새 발행이 있는 주에만 그 회사의 기록을 보냄. 합계는 기록을 달러로 환산해 자동 계산.
+# 올해·작년은 세부 내역, 그 이전 해는 종류별 합계만 (해가 바뀌면 자동으로 한 해씩 밀림).
+funding:
+  backfill_from: "2020-01-01"   # 처음 '자금조달기록' 실행 때 SEC 공시를 이 날짜부터 훑음
+  # 달러 환산 환율 (1통화 = ?달러, 2026년 11월 기준 대략값 — 필요하면 고치세요)
+  fx: {USD: 1, EUR: 1.17, GBP: 1.36, JPY: 0.0063, CAD: 0.725, AUD: 0.71, CHF: 1.25}
+  companies:
+    - {name: "Google", cik: 1652044, news: "Alphabet Google"}
+    - {name: "Amazon", cik: 1018724, news: "Amazon"}
+    - {name: "Meta", cik: 1326801, news: "Meta Platforms"}
+    - {name: "MS", cik: 789019, news: "Microsoft"}
+    - {name: "SpaceX", cik: 1181412, news: "SpaceX"}
+    - {name: "Apple", cik: 320193, news: "Apple"}
+    - {name: "Oracle", cik: 1341439, news: "Oracle"}
+    - {name: "CoreWeave", cik: 1769628, news: "CoreWeave"}
+    - {name: "Nebius", cik: 1513845, news: "Nebius"}
+    - {name: "IREN", cik: 1878848, news: "IREN"}
+    - {name: "OpenAI", news: "OpenAI", private: true}            # 비상장: 조달 논의도 기업가치와 함께
+    - {name: "Anthropic", cik: 2130357, news: "Anthropic", private_until: "2026-11-19"}  # 11/19 상장 예정 → 이후엔 결정 내용 하나만
+  # 직접 정리하신 기록 (2026-11-17). kind: 회사채/전환사채/보통주/우선주/IPO/지분투자 = 합계 포함,
+  # 계획/논의/메모 = 표시만. amt는 해당 통화 기준 '억' 단위. parts는 한 줄에 여러 발행이 묶인 경우의 합계용.
+  ledger:
+    Google:
+      deals:
+        - {date: "26.11.02", kind: 회사채, cur: EUR, amt: 60, text: "Google 회사채 60억유로 발행 결정."}
+        - {date: "26.08.19", kind: 회사채, cur: AUD, amt: 55, text: "Google 회사채 55억호주달러 발행 결정."}
+        - {date: "26.08.06", kind: 회사채, cur: USD, amt: 250, text: "Google 회사채 250억달러 발행 결정."}
+        - {date: "26.05.15", kind: 회사채, cur: JPY, amt: 5765, text: "Google 회사채 5,765억엔 발행 결정."}
+        - {date: "26.05.06", kind: 회사채, cur: CAD, amt: 85, text: "Google 회사채 85억캐나다달러 발행 결정, 2031·2033·2036·2056년 만기. 금리 3.650·4.000·4.350·5.000%"}
+        - {date: "26.05.06", kind: 회사채, cur: EUR, amt: 90, text: "Google 회사채 90억유로 발행 결정, 2030~2063년 만기, 금리 3.2~4.8%"}
+    Amazon:
+      deals:
+        - {date: "26.09.09", kind: 회사채, cur: GBP, amt: 42.5, text: "Amazon 42.5억파운드 발행 결정. 3년물 12.5억파운드, 6·12·19년물 각 10억 파운드."}
+        - {date: "26.07.07", kind: 회사채, cur: USD, amt: 250, text: "Amazon 회사채 250억달러 발행 결정. 3~40년 만기."}
+        - {date: "26.06.12", kind: 회사채, cur: CAD, amt: 140, text: "Amazon 회사채 140억캐나다달러 발행 완료. 2029~2056년 만기."}
+        - {date: "26.05.12", kind: 회사채, cur: CHF, amt: 28.2, text: "Amazon 회사채 28.2억스위스프랑 발행 결정. 3·6·9·12·18·25년 만기."}
+    Meta:
+      note: "2027년 975억달러 전망"
+      deals:
+        - {date: "26.11.05", kind: 보통주, cur: USD, amt: 287.5, text: "Meta 보통주 선도매각 287.5억달러 공모 종결."}
+        - {date: "26.11.05", kind: 회사채, cur: USD, amt: 150, text: "Meta 회사채 150억달러 발행 결정."}
+        - {date: "26.11.04", kind: 회사채, cur: EUR, amt: 90, text: "Meta 회사채 90억유로 발행 결정."}
+        - date: "26.10.26"
+          kind: 계획
+          text: "Meta 975억달러 조달계획 발표"
+          sub:
+            - "향후 Class C 주식 최대 600억달러 매각 계획. (26.10.28. 기준 방식 미정)"
+            - "26.10.29. 보통주 선도매각 250억달러 공모 종결 → 27.11.19.까지 자금 수취."
+            - "26.10.29. 의무전환우선주 125억달러 발행. 연 배당률 6.50%"
+          parts: [{kind: 보통주, cur: USD, amt: 250}, {kind: 우선주, cur: USD, amt: 125}]
+        - {date: "26.04.30", kind: 회사채, cur: USD, amt: 250, text: "Meta 회사채 250억달러 발행 결정."}
+    MS:
+      deals:
+        - {date: "26.10.29", kind: 회사채, cur: USD, amt: 250, text: "MS 회사채 250억달러 발행 결정. 만기 2028~2066년, 금리 4.85~6.35%"}
+        - date: "26.10.27"
+          kind: 메모
+          text: "26.10.27.까지 MS는 회사채 발행 X. 금융리스 등은 별도."
+          sub: ["26.10.26. SpaceX 400억달러 약정도 금융리스."]
+    SpaceX:
+      deals:
+        - {date: "26.06.23", kind: 회사채, cur: USD, amt: 250, text: "SpaceX 회사채 250억달러 발행 결정."}
+        - {date: "26.06.11", kind: IPO, cur: USD, amt: 862.5, text: "SpaceX 상장으로 862.5억달러 조달."}
+    Apple:
+      deals:
+        - date: "26.11.05"
+          kind: 회사채
+          cur: USD
+          amt: 75
+          text: "Apple 회사채 75억달러 발행 결정."
+          sub: ["자사주 매입, 배당, 운전자금, 부채 상환 등 목적.", "2028~2036년 만기, 금리 4.65~5.35%", "발행액의 4배 이상 몰림."]
+        - {date: "25.05.12", kind: 회사채, cur: USD, amt: 45, text: "Apple 회사채 45억달러 발행."}
+        - {date: "23.05.10", kind: 회사채, cur: USD, amt: 52.5, text: "Apple 회사채 52.5억달러 발행"}
+        - {date: "22.08.08", kind: 회사채, cur: USD, amt: 55, text: "Apple 회사채 55억달러 발행"}
+        - {date: "21.08.05", kind: 회사채, cur: USD, amt: 65, text: "Apple 회사채 65억달러 발행"}
+        - {date: "21.02.08", kind: 회사채, cur: USD, amt: 140, text: "Apple 회사채 140억달러 발행"}
+        - {date: "20.08.20", kind: 회사채, cur: USD, amt: 55, text: "Apple 회사채 55억달러 발행"}
+        - {date: "20.05.11", kind: 회사채, cur: USD, amt: 85, text: "Apple 회사채 85억달러 발행"}
+        - {date: "19.11.07", kind: 회사채, cur: EUR, amt: 20, text: "Apple 회사채 20억유로 발행"}
+        - {date: "17.11.13", kind: 회사채, cur: USD, amt: 70, text: "Apple 회사채 70억달러 발행"}
+        - {date: "17.09.12", kind: 회사채, cur: USD, amt: 50, text: "Apple 회사채 50억달러 발행"}
+        - {date: "17.08.16", kind: 회사채, cur: CAD, amt: 25, text: "Apple 회사채 25억캐나다달러 발행"}
+    Oracle:
+      deals:
+        - {date: "26.11.02", kind: 계획, text: "Oracle 보통주 공모 증자 100억달러, 회사채 100억달러 조달 계획 발표."}
+        - {date: "26.08", kind: 보통주, cur: USD, amt: 200, text: "Oracle 보통주 200억달러 매각 완료."}
+        - {date: "26.02.05", kind: 우선주, cur: USD, amt: 50, text: "Oracle 의무전환우선주 50억달러 발행 완료. 연 배당률 6.50%"}
+        - date: "26.02.04"
+          kind: 회사채
+          cur: USD
+          amt: 250
+          text: "Oracle 회사채 250억달러 발행 완료."
+          sub: ["26.02.01. Oracle은 450~500억달러 조달 계획 발표."]
+    CoreWeave:
+      deals:
+        - {date: "26.09.22", kind: 전환사채, cur: USD, amt: 42, text: "CoreWeave 전환사채 42억달러 발행 완료. 2033년 만기, 금리 2.875%"}
+        - {date: "26.06.18", kind: 회사채, cur: EUR, amt: 20, text: "CoreWeave 회사채 20억유로 발행 완료. 2032년 만기, 금리 8.5%"}
+        - {date: "26.06.18", kind: 회사채, cur: USD, amt: 12.5, text: "CoreWeave 회사채 12.5억달러 발행 완료. 2032년 만기, 금리 9.625%"}
+    Nebius:
+      deals:
+        - {date: "26.08.24", kind: 전환사채, cur: USD, amt: 57.5, text: "Nebius 전환사채 57.5억달러 발행 완료. 2030년물 금리 0.5%(34.5억달러), 2034년물 금리 4.5%(23억달러)"}
+    IREN:
+      deals:
+        - {date: "26.05.14", kind: 전환사채, cur: USD, amt: 30, text: "IREN 전환사채 30억달러 발행 완료. 2033년 만기."}
+    OpenAI:
+      deals:
+        - {date: "26.10.22", kind: 논의, cur: USD, amt: 300, text: "300억달러 조달 논의", sub: ["Coatue, UAE 등 주도 논의. 기업가치 1.25조달러 평가 추정."]}
+        - {date: "26.03.31", kind: 지분투자, cur: USD, amt: 1220, text: "1,220억달러 조달, 기업가치 8,520억달러 평가", sub: ["Amazon 500억달러, NVIDIA 300억달러, 소프트뱅크 300억달러 등 참여"]}
+        - {date: "25.12.26", kind: 지분투자, cur: USD, amt: 410, text: "410억달러 조달, 기업가치 3,000억달러 평가", sub: ["소프트뱅크 300억달러 + 그 외 110억달러", "조달 계획은 25.03.31. 발표됐었음."]}
+    Anthropic:
+      deals:
+        - {date: "26.10.26", kind: 계획, text: "IPO 추진 중."}
+        - {date: "26.05.28", kind: 지분투자, cur: USD, amt: 650, text: "650억달러 조달, 기업가치 9,650억달러 평가", sub: ["Altimeter·Dragoneer·Greenoaks·Sequoia 주도. 기존 하이퍼스케일러 투자약정 150억 달러 포함, 그중 Amazon 50억 달러를 명시."]}
+        - {date: "26.02.12", kind: 지분투자, cur: USD, amt: 300, text: "300억달러 조달, 기업가치 3,800억달러 평가", sub: ["GIC·Coatue 주도", "NVIDIA 최대 100억달러, MS 최대 50억달러 참여 (구체적 수치 미공개)"]}
+        - {date: "25.09.02", kind: 지분투자, cur: USD, amt: 130, text: "130억달러 조달, 기업가치 1,830억달러 평가", sub: ["ICONIQ 주도, Fidelity·Lightspeed 공동 주도."]}
+        - {date: "25.03.03", kind: 지분투자, cur: USD, amt: 35, text: "35억달러 조달, 기업가치 615억달러 평가", sub: ["Lightspeed 주도. Fidelity·Cisco·D1·General Catalyst·Jane Street·Menlo·Salesforce 등 참여"]}
+        - {date: "25.01.22", kind: 지분투자, cur: USD, amt: 10, text: "10억달러 초과 투자.", sub: ["Google 투자."]}
+        - {date: "24.11.22", kind: 지분투자, cur: USD, amt: 40, text: "40억달러 조달", sub: ["Amazon 투자."]}

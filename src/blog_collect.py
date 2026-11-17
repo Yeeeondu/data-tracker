@@ -1,8 +1,9 @@
-"""블로그 글 수집 — 블로거들의 글(제목·본문)을 state/blog_posts.json 에 모아 둠.
+"""매주 일요일 밤 — 블로거 글 학습 + 쉰 블로거 대신 기사 보내기.
 
-- 처음 실행: 전체 글 목록(제목)을 최대한 모으고, 최근 글은 본문까지 저장
-- 매주 일요일 자정: 새 글을 추가로 저장
-  (ANTHROPIC_API_KEY가 있으면 이어서 관심사 변화를 분석해 '앞으로 다룰 주제' 검색어를 자동 갱신)
+1) 블로거들의 새 글(제목·본문)을 state/blog_posts.json 에 저장 (처음엔 전체 글 목록까지)
+2) API 키가 있으면 관심사 변화를 분석해 블로거별 검색어를 갱신 (state/blogs.json)
+3) 지난 7일 동안 글을 하나도 안 올린 블로거가 있으면, 그 블로거가 봤을 법한 기사 15개를 링크로 보냄
+   (모두 글을 올렸으면 아무것도 보내지 않음)
 """
 import datetime as dt
 import json
@@ -13,10 +14,32 @@ import urllib.parse
 
 import requests
 
+from blogs import send_for_silent
 from common import UA, load_config, load_state, save_state
 from news import _strip, ask_claude_json, fetch_rss, llm_available
 
 H = {"User-Agent": UA, "Referer": "https://blog.naver.com/"}
+
+
+def norm_date(s, now=None):
+    """'2026. 9. 6.' / '7시간 전' / '15분 전' / '어제' / ISO → 'YYYY-MM-DD'. 모르면 ''."""
+    now = now or dt.datetime.now(dt.timezone(dt.timedelta(hours=9)))
+    s = (s or "").strip()
+    m = re.match(r"(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})", s)
+    if m:
+        return f"{int(m.group(1)):04d}-{int(m.group(2)):02d}-{int(m.group(3)):02d}"
+    m = re.match(r"(\d{4})-(\d{2})-(\d{2})", s)
+    if m:
+        return m.group(0)
+    m = re.match(r"(\d+)\s*(분|시간|일)\s*전", s)
+    if m:
+        unit = {"분": "minutes", "시간": "hours", "일": "days"}[m.group(2)]
+        return (now - dt.timedelta(**{unit: int(m.group(1))})).date().isoformat()
+    if s.startswith("어제"):
+        return (now - dt.timedelta(days=1)).date().isoformat()
+    if "방금" in s:
+        return now.date().isoformat()
+    return ""
 
 
 def title_list(bid, max_pages=40):
@@ -36,7 +59,7 @@ def title_list(bid, max_pages=40):
         for p in posts:
             out.append({"logNo": str(p.get("logNo")),
                         "title": urllib.parse.unquote_plus(p.get("title", "")).strip(),
-                        "date": p.get("addDate", "")})
+                        "date": norm_date(p.get("addDate", ""))})
         if len(posts) < 30:
             break
         time.sleep(0.5)
@@ -83,7 +106,7 @@ def collect(ids, db, fetch_bodies=40):
                 continue
             rec = posts.get(ln)
             if rec is None:
-                rec = posts[ln] = {"title": it["title"], "date": it["date"].date().isoformat() if it["date"] else "",
+                rec = posts[ln] = {"title": it["title"], "date": it["date"].astimezone(dt.timezone(dt.timedelta(hours=9))).date().isoformat() if it["date"] else "",
                                    "body": ""}
                 rec["new"] = dt.date.today().isoformat()
                 added += 1
@@ -94,32 +117,56 @@ def collect(ids, db, fetch_bodies=40):
     return added
 
 
+def recent_posts(db, days=8, min_per_blog=6, max_per_blog=15):
+    """블로거마다: 최근 days일 글, 적어도 최신 min_per_blog개 (글 번호가 클수록 최신)."""
+    since = (dt.date.today() - dt.timedelta(days=days)).isoformat()
+    out = {}
+    for bid, posts in db.items():
+        items = sorted(posts.items(), key=lambda kv: int(kv[0]) if kv[0].isdigit() else 0, reverse=True)
+        pick = [p for k, (_, p) in enumerate(items)
+                if k < min_per_blog or p.get("date", "") >= since or p.get("new", "") >= since][:max_per_blog]
+        out[bid] = [{"title": p["title"], "date": p.get("date", ""), "body": p.get("body", "")[:1000]} for p in pick]
+    return out
+
+
 def update_profile(db, prof_state):
-    """API 키가 있을 때: 최근 1주 글 + 기존 관심사로 '앞으로 다룰 주제' 검색어 갱신."""
-    week_ago = (dt.date.today() - dt.timedelta(days=8)).isoformat()
-    recent = {bid: [{"title": p["title"], "body": p.get("body", "")[:1200]}
-                    for p in posts.values() if p.get("new", "") >= week_ago or p.get("date", "") >= week_ago]
-              for bid, posts in db.items()}
+    """API 키가 있을 때: 블로거별 최근 글 + 기존 관심사로 '앞으로 다룰 주제' 검색어 갱신."""
+    recent = recent_posts(db)
     cfg_prof = load_config()["blogs"].get("profile", {})
-    prompt = ("내가 즐겨 읽는 투자 블로거들의 관심사 정리와, 이번 주 새로 올라온 글이다.\n"
-              f"[기존 관심사]\n{json.dumps(prof_state.get('profile') or cfg_prof, ensure_ascii=False)}\n\n"
-              f"[이번 주 글]\n{json.dumps(recent, ensure_ascii=False)[:50000]}\n\n"
-              "1) 관심사가 어디로 이동하고 있는지 정리하고, 2) 이들이 '앞으로' 쓸 글에 담길 내용을 예측해, "
-              "그 글을 쓰기 전에 읽을 법한 기사를 찾는 구글 뉴스 검색어 20~30개를 만들어라 "
-              "(이미 쓴 글의 주제를 반복하는 검색어보다, 다음 단계·파생 이슈·선행 지표 위주). "
+    base = {k: cfg_prof.get(k) for k in ("summary", "next_topics") if cfg_prof.get(k)}
+    prev = (prof_state.get("profile") or {})
+    prev = {k: prev.get(k) for k in ("shift", "themes") if prev.get(k)}
+    prompt = ("내가 즐겨 읽는 투자 블로거 5명(블로그 ID별)의 관심사 정리와 최근 글이다.\n"
+              f"[기본 관심사 — 블로그 전체 글을 읽고 정리한 것]\n{json.dumps(base, ensure_ascii=False)}\n\n"
+              f"[지난주 분석]\n{json.dumps(prev, ensure_ascii=False)}\n\n"
+              f"[블로거별 최근 글]\n{json.dumps(recent, ensure_ascii=False)[:60000]}\n\n"
+              "1) 블로거별로 관심사가 어디로 이동하고 있는지 정리하고, "
+              "2) 이들이 '앞으로' 쓸 글에 담길 내용을 예측해, 그 글을 쓰기 전에 읽을 법한 기사를 찾는 구글 뉴스 검색어를 만들어라. "
+              "반드시 다섯 블로거 모두를 고르게 다뤄라(블로거마다 5~7개, 총 25~35개). "
+              "이미 쓴 글의 주제를 반복하기보다 다음 단계·파생 이슈·선행 지표 위주로. "
               "검색어는 1~4단어, 한국어(lang=ko)와 영어(lang=en)를 섞어라.\n"
-              '출력: {"shift": "관심사 이동 2~3문장", "themes": ["..."], "queries": [{"q": "...", "lang": "ko"}]}')
-    return ask_claude_json(prompt, max_tokens=3000)
+              '출력: {"shift": "전체 흐름 2~3문장", "by_blog": {"블로그ID": "그 블로거의 관심 이동 1~2문장"}, '
+              '"themes": ["..."], "next_topics": ["..."], "queries": [{"q": "...", "lang": "ko", "blog": "블로그ID"}]}')
+    return ask_claude_json(prompt, max_tokens=4000)
+
+
+def posted_recently(posts, days=7):
+    since = (dt.date.today() - dt.timedelta(days=days)).isoformat()
+    return any(p.get("date", "") >= since or p.get("new", "") >= since for p in posts.values())
 
 
 def main():
     cfg = load_config()["blogs"]
     db = load_state("blog_posts")
+    for posts in db.values():  # 예전에 저장된 날짜 형식도 정리
+        for p in posts.values():
+            p["date"] = norm_date(p.get("date", "")) or p.get("date", "")
     added = collect(cfg["ids"], db)
     save_state("blog_posts", db)
     print(f"새 글 {added}개, 총 {sum(len(v) for v in db.values())}개 저장")
+
+    st = load_state("blogs")
     if llm_available() and "--no-llm" not in sys.argv:
-        st = load_state("blogs")
         try:
             prof = update_profile(db, st)
             prof["updated"] = dt.date.today().isoformat()
@@ -127,6 +174,11 @@ def main():
             save_state("blogs", st)
         except Exception as e:  # noqa: BLE001
             print(f"관심사 갱신 실패: {e}", file=sys.stderr)
+
+    silent = [b for b in cfg["ids"] if db.get(b) and not posted_recently(db[b])]
+    print(f"이번 주 글이 없는 블로거: {silent or '없음'}")
+    if silent or "--force-send" in sys.argv:
+        send_for_silent(silent or cfg["ids"], st.get("profile"), cfg.get("profile"), cfg.get("max_articles", 15))
 
 
 if __name__ == "__main__":
