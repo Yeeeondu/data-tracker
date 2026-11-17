@@ -1,0 +1,135 @@
+{
+  "profile": {
+    "shift": "이번 주 관심은 '산업 알아보기' 시리즈(조선·전력기기·엔터·로봇)에서 가격을 움직이는 것은 내러티브가 아니라 포지션과 수급이라는 시장 구조 분석으로 크게 옮겨갔다. 헤지펀드 디그로싱, 변동성 제어 펀드, 마이너스 감마, 딜러 대차대조표와 국채 발행이 그 대상이다. 동시에 젠슨 황 사임과 앤트로픽 '미토스'의 칩 이전 3일 사례로 엔비디아의 해자와 AI 하드웨어 밸류에이션을 다시 따지고 있다. 또 AI 생산성 지표의 부재(솔로우 역설), 재귀적 개선, Muse 같은 에이전트의 소비 파급효과로 'AI가 실제로 돈이 되는가'를 묻고 있다. 다음 산업 분석 주제로는 사이버보안이 예고됐다.",
+    "themes": [
+      "디그로싱·변동성 제어·감마 등 수급 충격의 진행 상황과 안정 조건",
+      "국채 발행과 딜러 대차대조표 부담, YCC 가능성 등 채권시장 구조",
+      "엔비디아 경영 공백, 대중국 우회 수출 차단, 가이던스 하향 위험",
+      "AI 칩 전환비용 하락(미토스)과 CUDA 해자 약화",
+      "하이퍼스케일러 자금조달(채권)과 고Capex 기업군의 상대성과 반전",
+      "AI 토큰 가격 하락과 프런티어 AI 기업의 수익성·지불 능력",
+      "AI 생산성 통계 부재(솔로우 역설)와 재귀적 개선 논쟁",
+      "AI 에이전트(Muse)가 구독·은행·통신 등 '소비자 관성' 매출에 주는 충격",
+      "사이버보안 산업 (다음 산업 분석 예고)",
+      "로봇 부품 병목(하모닉 감속기)과 휴머노이드 출하·중국 기업",
+      "전력기기 공급 병목(변압기 납기·증설 속도)과 HD현대일렉트릭·LS 증설 차이",
+      "조선 선가 정체와 멀티플 압축, 중국 점유율 확대",
+      "엔터 4사 마진 압박과 멀티플 하락"
+    ],
+    "queries": [
+      {
+        "q": "dealer balance sheet Treasury",
+        "lang": "en"
+      },
+      {
+        "q": "negative gamma selloff",
+        "lang": "en"
+      },
+      {
+        "q": "supplementary leverage ratio",
+        "lang": "en"
+      },
+      {
+        "q": "yield curve control Fed",
+        "lang": "en"
+      },
+      {
+        "q": "Nvidia CEO succession",
+        "lang": "en"
+      },
+      {
+        "q": "Nvidia China smuggling",
+        "lang": "en"
+      },
+      {
+        "q": "Anthropic Mythos chips",
+        "lang": "en"
+      },
+      {
+        "q": "recursive self-improvement AI",
+        "lang": "en"
+      },
+      {
+        "q": "Solow paradox AI",
+        "lang": "en"
+      },
+      {
+        "q": "hyperscaler bond issuance",
+        "lang": "en"
+      },
+      {
+        "q": "Oracle capex debt",
+        "lang": "en"
+      },
+      {
+        "q": "CoreWeave 주가",
+        "lang": "ko"
+      },
+      {
+        "q": "마이크론 공장 보류",
+        "lang": "ko"
+      },
+      {
+        "q": "AI token price decline",
+        "lang": "en"
+      },
+      {
+        "q": "Meta Muse agent",
+        "lang": "en"
+      },
+      {
+        "q": "AI agent subscription cancel",
+        "lang": "en"
+      },
+      {
+        "q": "사이버보안 AI 위협",
+        "lang": "ko"
+      },
+      {
+        "q": "cybersecurity stocks AI",
+        "lang": "en"
+      },
+      {
+        "q": "하모닉 드라이브 감속기",
+        "lang": "ko"
+      },
+      {
+        "q": "Unitree IPO",
+        "lang": "en"
+      },
+      {
+        "q": "HD현대일렉트릭 미국 증설",
+        "lang": "ko"
+      },
+      {
+        "q": "transformer lead time",
+        "lang": "en"
+      },
+      {
+        "q": "클락슨 신조선가지수",
+        "lang": "ko"
+      },
+      {
+        "q": "한화오션 주가",
+        "lang": "ko"
+      },
+      {
+        "q": "하이브 BTS 투어 실적",
+        "lang": "ko"
+      },
+      {
+        "q": "엔터 4사 목표주가",
+        "lang": "ko"
+      },
+      {
+        "q": "Russell 2000 rotation",
+        "lang": "en"
+      },
+      {
+        "q": "VIX spike hedge funds",
+        "lang": "en"
+      }
+    ],
+    "updated": "2026-11-17"
+  }
+}
