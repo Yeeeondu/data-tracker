@@ -141,5 +141,58 @@ blogs:
   # 블로거들의 글을 읽고 정리한 관심사와 '앞으로 다룰 주제' 검색어.
   # (API 키가 있으면 매주 일요일 자동 갱신본이 우선 쓰이고, 없으면 여기 값을 씀)
   profile:
-    summary: ""
-    queries: []
+    updated: "2026-11-17"
+    summary: >-
+      다섯 블로거 모두 AI 사이클과 그 파급효과를 중심에 두고 있음.
+      dhgusdnd44: '흥미로운 데이터' 시리즈(AI capex·금리·헤지펀드 포지션·변동성 펀드)와 산업 알아보기 시리즈(조선·전력기기·엔터·방산·광통신·기판 → 최근 로봇 1부).
+      travelingcompanion: 메모리(하이닉스·삼성·HBM), 한국 지배구조·IR·주주환원, 소비재 리레이팅(신세계·에이피알·K뷰티), 드러켄밀러·Citrini·SemiAnalysis·Stratechery 등 투자 대가와 해외 리서치.
+      mech05: AI가 경제·일자리·연구에 미치는 영향, 앤트로픽 상장, 연산 가격과 CUDA·TPU 경쟁, GLP-1 파급효과, 머스크·스페이스X, 책 리뷰.
+      ironbed2: 코스피·코스닥 수급과 정책, 반도체 지수 조정, 지정학(한반도·중일·미중·이란), 연준(케빈 워시)과 미국 정치.
+      rnjs1016k: 원유·유조선(VLCC)·해양시추·정제마진·LNG·석탄, 조선 수주, 전력설비·데이터센터, 중동 전쟁과 미국 금리.
+    next_topics:
+      - "로봇 산업 2부 이후: 휴머노이드 부품(감속기·액추에이터·센서)과 중국 로봇 기업"
+      - "AI 하드웨어 급락 이후: 헤지펀드 디레버리징 마무리 여부, 빅테크 capex 가이던스, 엔비디아 경영 공백"
+      - "메모리 가격·HBM 협상과 메모리 업체 실적 하방, 삼성 주주환원"
+      - "앤트로픽 상장 일정과 AI 기업 수익성(ARR), AI 생산성·일자리 통계"
+      - "코스닥 활성화 정책·국민연금 수급, 연준 금리 인상 여부"
+      - "이란 전쟁·러시아 정유시설 타격 이후 원유 수급, VLCC 운임, 시추 수주, LNG 장기계약"
+      - "전력기기·변압기·데이터센터 전력 인프라, 조선 수주와 선가"
+    queries:
+      # dhgusdnd44 — 데이터·산업 시리즈
+      - {q: "휴머노이드 감속기 액추에이터", lang: ko}
+      - {q: "humanoid robot supply chain", lang: en}
+      - {q: "hyperscaler capex guidance", lang: en}
+      - {q: "hedge fund degrossing", lang: en}
+      - {q: "volatility control funds selling", lang: en}
+      - {q: "엔비디아 크레스 임시 CEO", lang: ko}
+      - {q: "AI productivity statistics", lang: en}
+      # travelingcompanion — 메모리·지배구조·소비재
+      - {q: "DRAM 고정거래가격", lang: ko}
+      - {q: "HBM4 pricing", lang: en}
+      - {q: "의무공개매수 상법 개정", lang: ko}
+      - {q: "주주환원 밸류업 공시", lang: ko}
+      - {q: "K뷰티 미국 오프라인", lang: ko}
+      - {q: "SemiAnalysis", lang: en}
+      - {q: "Stratechery", lang: en}
+      # mech05 — AI 경제·연산·바이오
+      - {q: "Anthropic IPO", lang: en}
+      - {q: "AI white collar jobs", lang: en}
+      - {q: "GPU rental prices", lang: en}
+      - {q: "AMD Anthropic compute", lang: en}
+      - {q: "oral GLP-1 obesity pill", lang: en}
+      - {q: "AI drug discovery trial", lang: en}
+      - {q: "SpaceX orbital data center", lang: en}
+      # ironbed2 — 국내 수급·정책·지정학
+      - {q: "코스닥 활성화 정책", lang: ko}
+      - {q: "국민연금 국내주식 비중", lang: ko}
+      - {q: "외국인 순매도 코스피", lang: ko}
+      - {q: "케빈 워시 금리 인상", lang: ko}
+      - {q: "중일 갈등 대만", lang: ko}
+      # rnjs1016k — 에너지·해운·시추·전력
+      - {q: "VLCC rates", lang: en}
+      - {q: "OPEC+ output Iran war", lang: en}
+      - {q: "offshore drilling contract dayrate", lang: en}
+      - {q: "refining margins diesel", lang: en}
+      - {q: "LNG long-term contract", lang: en}
+      - {q: "조선 수주 신조선가", lang: ko}
+      - {q: "변압기 수주 데이터센터 전력", lang: ko}
