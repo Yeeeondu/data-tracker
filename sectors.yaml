@@ -1,0 +1,367 @@
+# 업종(테마)별 종목 묶음 — 업종 안에서 혼자 다르게 움직이는 종목을 찾는 데 씀.
+# 미국 상장 종목만 (Yahoo Finance 티커). 한 종목이 여러 묶음에 들어가도 됨.
+# 자유롭게 추가·삭제하세요. 형식: 티커: 표시 이름
+
+AI 하드웨어·인프라:
+  # 칩: 팹리스·IP·EDA
+  NVDA: NVIDIA
+  AMD: AMD
+  AVGO: Broadcom
+  ARM: ARM
+  QCOM: Qualcomm
+  LSCC: Lattice
+  RMBS: Rambus
+  SNPS: Synopsys
+  CDNS: Cadence
+  # 칩: 파운드리·종합반도체
+  TSM: TSMC
+  INTC: Intel
+  GFS: GlobalFoundries
+  UMC: UMC
+  TSEM: Tower Semiconductor
+  # 칩: OSAT(후공정·패키징)
+  AMKR: Amkor
+  ASX: ASE Technology
+  # 메모리·스토리지
+  MU: Micron
+  SNDK: SanDisk
+  WDC: Western Digital
+  STX: Seagate
+  # 장비·부품·소재
+  ASML: ASML
+  AMAT: Applied Materials
+  LRCX: Lam Research
+  KLAC: KLA
+  TER: Teradyne
+  ONTO: Onto Innovation
+  COHU: Cohu
+  FORM: FormFactor
+  AEHR: Aehr Test Systems
+  CAMT: Camtek
+  NVMI: Nova
+  KLIC: Kulicke & Soffa
+  ACMR: ACM Research
+  VECO: Veeco
+  UCTT: Ultra Clean
+  ICHR: Ichor
+  MKSI: MKS
+  ENTG: Entegris
+  PLAB: Photronics
+  # 아날로그
+  TXN: Texas Instruments
+  ADI: Analog Devices
+  NXPI: NXP
+  MCHP: Microchip
+  # 전력반도체 (800V·SiC·GaN·전원 모듈)
+  MPWR: Monolithic Power
+  NVTS: Navitas
+  ON: onsemi
+  WOLF: Wolfspeed
+  STM: STMicro
+  VICR: Vicor
+  POWI: Power Integrations
+  AOSL: Alpha & Omega
+  # 네트워크·광통신·인터커넥트
+  MRVL: Marvell
+  ALAB: Astera Labs
+  CRDO: Credo
+  CLS: Celestica
+  ANET: Arista
+  CSCO: Cisco
+  NOK: Nokia
+  CIEN: Ciena
+  COHR: Coherent
+  LITE: Lumentum
+  GLW: Corning
+  FN: Fabrinet
+  AAOI: Applied Optoelectronics
+  MTSI: MACOM
+  SMTC: Semtech
+  AXTI: AXT
+  # 서버·스토리지 시스템·EMS
+  DELL: Dell
+  SMCI: Super Micro
+  HPE: HPE
+  PSTG: Pure Storage
+  NTAP: NetApp
+  JBL: Jabil
+  FLEX: Flex
+  # 전력·냉각·데이터센터 설비·시공
+  VRT: Vertiv
+  ETN: Eaton
+  GEV: GE Vernova
+  PWR: Quanta Services
+  CAT: Caterpillar
+  CMI: Cummins
+  MOD: Modine
+  NVT: nVent
+  HUBB: Hubbell
+  POWL: Powell
+  TT: Trane
+  GNRC: Generac
+  EME: EMCOR
+  FIX: Comfort Systems
+  # 전력원: 원전·연료·가스·연료전지·태양광
+  CEG: Constellation
+  VST: Vistra
+  TLN: Talen
+  OKLO: Oklo
+  SMR: NuScale
+  NNE: Nano Nuclear
+  LEU: Centrus Energy
+  CCJ: Cameco
+  BWXT: BWX Technologies
+  BW: Babcock & Wilcox
+  FRMI: Fermi
+  BE: Bloom Energy
+  FSLR: First Solar
+  NXT: Nextracker
+  # 네오클라우드·AI 데이터센터
+  ORCL: Oracle
+  CRWV: CoreWeave
+  NBIS: Nebius
+  IREN: IREN
+  APLD: Applied Digital
+  CIFR: Cipher Mining
+  WULF: TeraWulf
+  GLXY: Galaxy Digital
+  CORZ: Core Scientific
+  HUT: Hut 8
+
+빅테크·플랫폼:
+  GOOGL: Alphabet
+  META: Meta
+  AMZN: Amazon
+  MSFT: Microsoft
+  AAPL: Apple
+  NFLX: Netflix
+  UBER: Uber
+  DASH: DoorDash
+  ABNB: Airbnb
+  BKNG: Booking
+  SPOT: Spotify
+  RDDT: Reddit
+  PINS: Pinterest
+  SHOP: Shopify
+  MELI: MercadoLibre
+  SE: Sea
+  CPNG: Coupang
+  DUOL: Duolingo
+  TDUP: ThredUp
+  MTCH: Match Group
+  GRND: Grindr
+  RBLX: Roblox
+  EBAY: eBay
+  ETSY: Etsy
+  CART: Instacart
+  HIMS: Hims & Hers
+  PDD: PDD
+  BABA: Alibaba
+
+소프트웨어:
+  ORCL: Oracle
+  CRM: Salesforce
+  NOW: ServiceNow
+  ADBE: Adobe
+  INTU: Intuit
+  WDAY: Workday
+  SNOW: Snowflake
+  MDB: MongoDB
+  DDOG: Datadog
+  PLTR: Palantir
+  TEAM: Atlassian
+  HUBS: HubSpot
+  ADSK: Autodesk
+  APP: AppLovin
+  U: Unity
+  FIG: Figma
+  IBM: IBM
+  SAP: SAP
+  PATH: UiPath
+  TTD: Trade Desk
+  GTLB: GitLab
+  ESTC: Elastic
+  DOCN: DigitalOcean
+  VEEV: Veeva
+
+보안:
+  CRWD: CrowdStrike
+  PANW: Palo Alto
+  ZS: Zscaler
+  FTNT: Fortinet
+  NET: Cloudflare
+  OKTA: Okta
+  S: SentinelOne
+  CYBR: CyberArk
+  CHKP: Check Point
+  RBRK: Rubrik
+  QLYS: Qualys
+  TENB: Tenable
+  VRNS: Varonis
+
+AI 신약·바이오:
+  # AI 신약개발
+  RXRX: Recursion
+  SDGR: Schrodinger
+  ABSI: Absci
+  ABCL: AbCellera
+  GENB: Generate Biomedicines
+  # 정밀진단·유전체
+  TEM: Tempus AI
+  GH: Guardant Health
+  WGS: GeneDx
+  CAI: Caris Life Sciences
+  NTRA: Natera
+  # 연구도구·장비
+  TMO: Thermo Fisher
+  DHR: Danaher
+  A: Agilent
+  ILMN: Illumina
+  TXG: 10x Genomics
+  TWST: Twist Bioscience
+  PACB: PacBio
+  # 대형 제약·바이오
+  LLY: Eli Lilly
+  NVO: Novo Nordisk
+  MRK: Merck
+  AZN: AstraZeneca
+  AMGN: Amgen
+  REGN: Regeneron
+  VRTX: Vertex
+  GILD: Gilead
+  ISRG: Intuitive Surgical
+
+소비재:
+  PG: P&G
+  KO: Coca-Cola
+  PEP: PepsiCo
+  COST: Costco
+  WMT: Walmart
+  TGT: Target
+  HD: Home Depot
+  NKE: Nike
+  LULU: Lululemon
+  ONON: On Holding
+  DECK: Deckers
+  TPR: Tapestry
+  EL: Estee Lauder
+  ULTA: Ulta
+  ELF: e.l.f.
+  CELH: Celsius
+  MNST: Monster
+  MCD: McDonald's
+  SBUX: Starbucks
+  CMG: Chipotle
+  CAVA: CAVA
+  BBW: Build-A-Bear
+
+에너지·해운:
+  # 석유·가스 생산
+  XOM: Exxon
+  CVX: Chevron
+  COP: ConocoPhillips
+  OXY: Occidental
+  YPF: YPF
+  EQT: EQT
+  EXE: Expand Energy
+  # 서비스·시추·장비
+  SLB: SLB
+  HAL: Halliburton
+  BKR: Baker Hughes
+  FTI: TechnipFMC
+  TS: Tenaris
+  PTEN: Patterson-UTI
+  RIG: Transocean
+  NE: Noble
+  VAL: Valaris
+  # LNG·가스 인프라
+  LNG: Cheniere
+  VG: Venture Global
+  WMB: Williams
+  KMI: Kinder Morgan
+  FLNG: Flex LNG
+  GLNG: Golar LNG
+  # 탱커
+  FRO: Frontline
+  DHT: DHT
+  INSW: International Seaways
+  TNK: Teekay Tankers
+  STNG: Scorpio Tankers
+  # 정제
+  VLO: Valero
+  MPC: Marathon Petroleum
+
+금속·광물:
+  FCX: Freeport
+  SCCO: Southern Copper
+  TECK: Teck
+  BHP: BHP
+  RIO: Rio Tinto
+  NEM: Newmont
+  B: Barrick
+  AEM: Agnico Eagle
+  HL: Hecla
+  CDE: Coeur
+  AA: Alcoa
+  NUE: Nucor
+  MP: MP Materials
+  ALB: Albemarle
+  SQM: SQM
+  CCJ: Cameco
+  UEC: Uranium Energy
+
+전통 유틸리티:
+  NEE: NextEra
+  SO: Southern Co
+  DUK: Duke
+  D: Dominion
+  AEP: AEP
+  XEL: Xcel
+  EXC: Exelon
+  SRE: Sempra
+  PCG: PG&E
+  ED: Con Edison
+  NRG: NRG
+
+방산·우주·로봇:
+  RTX: RTX
+  LMT: Lockheed
+  NOC: Northrop
+  GD: General Dynamics
+  LHX: L3Harris
+  HII: Huntington Ingalls
+  BA: Boeing
+  GE: GE Aerospace
+  KTOS: Kratos
+  AVAV: AeroVironment
+  RKLB: Rocket Lab
+  ASTS: AST SpaceMobile
+  PL: Planet Labs
+  LUNR: Intuitive Machines
+  FLY: Firefly Aerospace
+  SPCX: SpaceX
+  TSLA: Tesla
+  SYM: Symbotic
+
+금융:
+  JPM: JPMorgan
+  GS: Goldman Sachs
+  MS: Morgan Stanley
+  BAC: Bank of America
+  C: Citi
+  WFC: Wells Fargo
+  BLK: BlackRock
+  KKR: KKR
+  BX: Blackstone
+  APO: Apollo
+  SCHW: Schwab
+  IBKR: Interactive Brokers
+  HOOD: Robinhood
+  COIN: Coinbase
+  SOFI: SoFi
+  AFRM: Affirm
+  PYPL: PayPal
+  XYZ: Block
+  V: Visa
+  MA: Mastercard
+  AXP: AmEx
