@@ -101,6 +101,9 @@ def llm_available():
     return bool(os.environ.get("ANTHROPIC_API_KEY"))
 
 
+USAGE = {}  # 모델별 사용 토큰 {model: [입력, 출력]}
+
+
 def ask_claude(prompt, system="", max_tokens=3000, model=None):
     model = model or os.environ.get("CLAUDE_MODEL") or "claude-sonnet-5-5"
     body = {"model": model, "max_tokens": max_tokens,
@@ -114,7 +117,11 @@ def ask_claude(prompt, system="", max_tokens=3000, model=None):
             "content-type": "application/json",
         })
         if r.ok:
-            return "".join(b.get("text", "") for b in r.json()["content"])
+            j = r.json()
+            u = USAGE.setdefault(model, [0, 0])
+            u[0] += j.get("usage", {}).get("input_tokens", 0)
+            u[1] += j.get("usage", {}).get("output_tokens", 0)
+            return "".join(b.get("text", "") for b in j["content"])
         print(f"claude error {r.status_code}: {r.text[:300]}", file=sys.stderr)
         if r.status_code in (429, 500, 502, 503, 529):
             time.sleep(20 * (attempt + 1))
@@ -134,12 +141,12 @@ def _parse_json(text):
         return json.loads(fixed)
 
 
-def ask_claude_json(prompt, system="", max_tokens=3000):
+def ask_claude_json(prompt, system="", max_tokens=3000, model=None):
     """JSON으로 답받기. 형식이 깨지면 최대 2번 다시 요청."""
     ask = prompt + "\n\n반드시 올바른 JSON만 출력하세요. 코드블록 표시 없이. 문자열 안의 큰따옴표는 \\\" 로 쓰세요."
     last = None
     for attempt in range(3):
-        text = ask_claude(ask, system, max_tokens)
+        text = ask_claude(ask, system, max_tokens, model=model)
         try:
             return _parse_json(text)
         except json.JSONDecodeError as e:

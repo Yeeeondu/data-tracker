@@ -286,6 +286,36 @@ def backfill(cfg, st):
     save_state("funding", st)
 
 
+def last_funding_date(names, cfg, st):
+    """묶음 안 회사들의 마지막 실제 조달(회사채·전환사채·주식·지분투자) 날짜."""
+    last = None
+    for n in names:
+        for d in ledger_for(n, cfg, st):
+            kinds = {d.get("kind")} | {p.get("kind") for p in d.get("parts") or []}
+            if not kinds & COUNTED:
+                continue
+            try:
+                day = dt.datetime.strptime(d["date"][:8], "%y.%m.%d").date()
+            except (ValueError, KeyError, TypeError):
+                continue
+            last = max(last, day) if last else day
+    return last
+
+
+def quiet_lines(cfg, st, today):
+    """그 주에 조달이 없던 묶음: '자금 조달 없음' / 'N주 간 자금 조달 없음'."""
+    lines = []
+    for group, names in (cfg.get("groups") or {}).items():
+        last = last_funding_date(names, cfg, st)
+        days = (today - last).days if last else None
+        if days is not None and days < 7:
+            continue  # 이번 주에 조달 있음
+        weeks = days // 7 if days is not None else 0
+        msg = "자금 조달 없음" if weeks <= 1 else f"{weeks}주 간 자금 조달 없음"
+        lines.append(f"• <b>{html_escape(group)}</b> ({', '.join(names)}): {msg}")
+    return lines
+
+
 def main():
     cfg = load_config()["funding"]
     fx = cfg.get("fx", {"USD": 1})
@@ -325,11 +355,14 @@ def main():
             if c["name"] not in changed:
                 changed.append(c["name"])
         sources[c["name"]] = [f["url"] for f in fil if f["form"] == "FWP"][:1] + [n["link"] for n in nw][:1]
-    if not changed:
+    quiet = quiet_lines(cfg, st, today)
+    if not changed and not quiet:
         print("이번 주 새 발행 없음 → 메시지 안 보냄")
         return
     save_state("funding", st)
     blocks = [f"💵 <b>자금 조달 업데이트</b> ({since}~{today})"]
+    if quiet:
+        blocks.append("\n".join(quiet))
     for name in changed:
         note = ((cfg.get("ledger") or {}).get(name) or {}).get("note", "")
         b = render(name, ledger_for(name, cfg, st), fx, today, new_keys, note)
