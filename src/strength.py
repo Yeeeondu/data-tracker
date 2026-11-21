@@ -98,7 +98,10 @@ def daily(sectors, data):
         rows = sorted((v for v in hits.values() if v[2] == mk), key=lambda v: -v[0])[:12]
         if rows:
             blocks.append(f"<u>{label} ({dates.get(mk, '')})</u>\n" + "\n".join(f"- {r[1]}" for r in rows))
-    send_long("⚡ <b>업종과 다르게 움직인 종목</b>\n\n" + "\n\n".join(blocks))
+    send_long("⚡ <b>업종과 다르게 움직인 종목</b>\n"
+              "<i>하루 등락률 기준. 같은 업종(5종목 이상) 중앙값이 +0.5% 이하인데 +3% 이상 오른 종목, "
+              "중앙값이 −0.5% 이상인데 −3% 이상 내린 종목, 또는 중앙값과 7%p 이상 차이 난 종목</i>\n\n"
+              + "\n\n".join(blocks))
 
 
 # ───────── 매주: 약한 업종 속 강한 종목 ─────────
@@ -147,7 +150,7 @@ def weekly(sectors, data):
         print("이번 주는 약한 업종 속 강한 종목 없음")
         return
     today = dt.date.today().strftime("%m/%d")
-    send_long(f"🔎 <b>약한 업종 속 강한 종목</b> ({today})\n<i>업종 종목의 80% 이상이 최근 4주간 신고가를 못 낸 업종만</i>\n\n"
+    send_long(f"🔎 <b>약한 업종 속 강한 종목</b> ({today})\n<i>업종 종목의 80% 이상이 최근 4주간 52주 신고가를 못 낸 업종에서, 홀로 신고가·근접(이번 주 신고가 또는 고점 대비 −3% 이내) 종목과 업종 평균이 고점 대비 −15% 이하일 때 평균보다 10%p 이상 덜 빠진 종목</i>\n\n"
               + "\n\n".join(blocks))
 
 

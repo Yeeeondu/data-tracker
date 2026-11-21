@@ -1,11 +1,12 @@
 """빅테크·AI 기업 자금 조달 기록.
 
 매주 일요일 밤: 지난 7일 새 발행(회사채·전환사채·주식·지분투자)을 찾아 기록에 더하고,
-새 건이 있는 회사만 아래 형식으로 보냄 (없으면 안 보냄).
+새 건이 있는 회사만 아래 형식으로 보냄. 하이퍼스케일러·프론티어 AI·네오클라우드는 없으면 'N주 간 자금 조달 없음'.
+이 묶음 회사들의 '자금 조달 방향·계획' 언급(전액 확보, 추가 조달 필요, 계획 변경 등)은 매일 아침(지난 24시간) 별도 메시지(🧭)로 기사 링크와 함께 보냄 (--plans).
 
   • Google: 2025년 373억달러 → 2026년 1,300억달러
      2026년: 회사채 1,300억달러
-     ◦ 🆕 26.11.02. Google 회사채 60억유로 발행 결정.
+     ◦ 🚨New 26.11.02. Google 회사채 60억유로 발행 결정.
      ...
      지난 합계: 2024년 110억달러(회사채) / 2023년 ...
 
@@ -184,7 +185,7 @@ def render(name, deals, fx, today, new_keys=(), note=""):
         y = deal_year(d)
         if y is not None and y < year - 1:
             continue  # 2년 전 이전은 합계만
-        mark = "🆕 " if (d.get("date"), d.get("text")) in new_keys else ""
+        mark = "🚨New " if (d.get("date"), d.get("text")) in new_keys else ""
         date = f"{html_escape(d['date'])}. " if d.get("date") else ""
         lines.append(f"   ◦ {mark}{date}{html_escape(d.get('text', ''))}")
         for sub in d.get("sub") or []:
@@ -210,11 +211,16 @@ STYLE = """문장 예시 (날짜는 YY.MM.DD, 금액은 억 단위 + 통화):
  "text": "위 예시 형식 한 줄", "sub": ["필요할 때만 세부 줄"]}
  - kind: 보통주 선도매각·ATM·유상증자 = 보통주, 의무전환우선주 = 우선주, 비상장사 투자 유치 = 지분투자,
    '조달 계획 발표' = 계획, 비상장사의 '조달 논의·추진' 보도 = 논의 (계획·논의는 합계에 안 들어감)
+ - 회사채는 어떤 채권인지 text에 구체적으로: 선순위 무담보채(senior unsecured notes) / 담보부채(칩·설비 등 자산 담보) /
+   특수목적법인(SPV)·자회사 발행 / 자산유동화증권(ABS) / 후순위·하이브리드채 / 기업어음(CP). 만기·금리가 있으면 같이.
+   은행 대출과 채권이 섞인 패키지면 채권 부분만 기록하고, sub에 '은행 대출 ○○억달러는 제외'라고 적어라.
  - 포함: 회사채(외화채 포함), 전환·교환사채, 보통주·우선주 발행, 상장 공모, 비상장사 투자 유치
  - 제외: 은행 대출, 신용한도, 금융리스, 자사주 매입, 회사로 돈이 안 들어오는 구주 매출, 선반등록만 한 경우, 기존 채권 교환
  - ATM·선도매각 '프로그램 설정'이나 '매각 한도 설정'은 실제 발행이 아니므로 kind=계획. 실제로 판 금액이 공시되면 그 금액만 보통주로.
  - 가격이 정해지지 않은 예비 투자설명서('추진', preliminary)는 기록하지 말고, 가격이 확정된 최종 조건만 기록.
  - 자회사의 투자 유치는 본사 조달이 아니므로 kind=메모.
+ - '필요 자금 전액 확보', '추가 조달 필요', '조달 계획 변경' 같은 자금 조달 방향 언급은 여기 기록하지 마라 (별도 메시지로 감).
+ - 공급업체 금융(vendor financing)·리스로 확보한 자금은 합계에 넣지 마라.
  - 같은 발행을 다룬 공시가 여러 개면 하나로. 숫자는 공시 우선, 뉴스에만 있으면 text 끝에 '(보도 기준)'."""
 
 
@@ -316,15 +322,111 @@ def quiet_lines(cfg, st, today):
     return lines
 
 
+# ───────── 자금 조달 방향(계획) 언급: 별도 메시지 ─────────
+PLAN_KINDS = "확보 완료|추가 조달 필요|조달 예정|계획 변경·중단|기타"
+
+
+def plan_news(company, hours=26):
+    term = company["news"]
+    out = []
+    for q, lang in ((f'{term} (financing OR funding OR "raise capital" OR "capital needs" OR "fully funded" OR '
+                     '"funding plan" OR borrowing OR "external financing" OR "free cash flow" OR capex)', "en"),
+                    (f"{company['name']} 자금 조달", "ko")):
+        try:
+            out += [{"title": i["title"], "source": i["source"], "link": i["link"], "desc": (i.get("desc") or "")[:200]}
+                    for i in google_news(q, lang, hours=hours)[:20]]
+        except Exception as e:  # noqa: BLE001
+            print(f"{company['name']} 계획 뉴스 실패: {e}", file=sys.stderr)
+    seen, res = set(), []
+    for i in out:
+        k = re.sub(r"\W+", "", i["title"].lower())[:60]
+        if k not in seen:
+            seen.add(k)
+            res.append(i)
+    return res
+
+
+def plan_statements(cfg, st, today, since):
+    names = [n for g in (cfg.get("groups") or {}).values() for n in g]
+    comps = [c for c in cfg["companies"] if c["name"] in names]
+    sent = [x for x in st.get("_plans_sent", []) if x.get("date", "") >= (today - dt.timedelta(days=60)).isoformat()]
+    sent_keys = {x["key"] for x in sent}
+    bundle = {}
+    for c in comps:
+        items = [i for i in plan_news(c) if re.sub(r"\W+", "", i["title"].lower())[:60] not in sent_keys]
+        if items:
+            bundle[c["name"]] = items
+    if not bundle:
+        return []
+    payload = [{"company": n, "articles": [{"id": k, "title": i["title"], "source": i["source"], "snippet": i["desc"]}
+                                           for k, i in enumerate(v)]} for n, v in bundle.items()]
+    already = [{"company": x["company"], "occasion": x.get("occasion", ""), "date": x["date"]} for x in sent]
+    prompt = (f"회사별 지난 24시간({since}~{today}) 뉴스다. 회사의 '자금 조달 방향·계획'에 대한 언급만 골라라.\n"
+              "포함: 회사(경영진·공식 발표·공시·실적 발표·투자자의 날)가 밝힌 '필요 자금 전액 확보', '추가 외부 조달 불필요', "
+              "'자금이 더 필요하다', '○○억달러 조달 예정', '조달 계획 변경·중단', 'CAPEX 재원을 어떻게 마련할지' 같은 내용. "
+              "신뢰할 만한 언론이 회사의 조달 계획(추진·협상)을 보도한 것도 포함하되 official=false.\n"
+              "제외: 이미 끝난 개별 채권·주식 발행 소식 자체(가격 확정·발행 완료), 애널리스트·언론의 추측·평가, 주가 기사, 동명이인.\n"
+              "같은 발표·같은 보도는 기사 1개만. 아래 '이미 보낸 것'과 같은 발표는 제외.\n"
+              f"[이미 보낸 것]\n{json.dumps(already, ensure_ascii=False)}\n\n"
+              f'출력: [{{"company": 회사, "id": 기사 id, "kind": "{PLAN_KINDS}", "official": true/false, '
+              '"occasion": "어떤 발표인지 짧게 (중복 확인용)", "summary": "한국어 1~2문장, 숫자 그대로"}] — 없으면 [].\n\n'
+              + json.dumps(payload, ensure_ascii=False))
+    picks = ask_claude_json(prompt, max_tokens=2000) or []
+    res, occs = [], set()
+    for p in picks:
+        n, i = p.get("company"), p.get("id")
+        if n not in bundle or not isinstance(i, int) or not 0 <= i < len(bundle[n]):
+            continue
+        occ = (n, p.get("occasion", ""))
+        if occ in occs:
+            continue
+        occs.add(occ)
+        art = bundle[n][i]
+        res.append(p | {"article": art})
+        sent.append({"date": today.isoformat(), "company": n, "occasion": p.get("occasion", ""),
+                     "key": re.sub(r"\W+", "", art["title"].lower())[:60]})
+    st["_plans_sent"] = sent
+    return res
+
+
+def send_plans(items, since, today):
+    if not items:
+        print("자금 조달 방향 언급 없음")
+        return
+    lines = [f"🧭 <b>자금 조달 계획 언급</b> ({since}~{today})"]
+    for p in items:
+        a = p["article"]
+        src = "회사 발표" if p.get("official") else "보도"
+        lines.append(f"\n• <b>{html_escape(p['company'])}</b> — {html_escape(p.get('kind', ''))} ({src})\n"
+                     f"   {html_escape(p.get('summary', ''))}\n"
+                     f'   <a href="{html_escape(a["link"])}">{html_escape(a["title"][:90])}</a> ({html_escape(a["source"])})')
+    send_long("\n".join(lines))
+
+
+def apply_fixes(cfg, st):
+    """config.yaml funding.fixes: 이미 기록된 건을 손으로 고칠 때 (회사·날짜·문구 앞부분으로 찾음)."""
+    for f in cfg.get("fixes") or []:
+        for d in (st.get(f["company"]) or {}).get("deals", []):
+            if d.get("date") == f["date"] and d.get("text", "").startswith(f["match"]):
+                d.update(f["set"])
+
+
 def main():
     cfg = load_config()["funding"]
     fx = cfg.get("fx", {"USD": 1})
     st = load_state("funding")
+    apply_fixes(cfg, st)
     if not llm_available():
         print("ANTHROPIC_API_KEY가 없어 자금 조달 정리를 건너뜀")
         return
     if "--backfill" in sys.argv:
         backfill(cfg, st)
+        return
+    if "--plans" in sys.argv:  # 매일: 자금 조달 방향 언급 (지난 24시간, 별도 메시지)
+        today = dt.date.today()
+        items = plan_statements(cfg, st, today, (today - dt.timedelta(days=1)).isoformat())
+        save_state("funding", st)
+        send_plans(items, (today - dt.timedelta(days=1)).strftime("%m/%d"), today.strftime("%m/%d"))
         return
     today = dt.date.today()
     since = (today - dt.timedelta(days=7)).isoformat()
